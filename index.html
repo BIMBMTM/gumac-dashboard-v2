@@ -7,41 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-// Sequential loader - đảm bảo load đúng thứ tự
-var LIBS = [
-  'https://unpkg.com/react@18.2.0/umd/react.production.min.js',
-  'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js',
-  'https://unpkg.com/papaparse@5.4.1/papaparse.min.js',
-  'https://unpkg.com/recharts@2.12.7/umd/Recharts.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js'
-];
-var idx = 0;
-function loadNext() {
-  if (idx >= LIBS.length) {
-    // Tất cả load xong, compile JSX thủ công
-    setTimeout(function(){
-      var appScript = document.getElementById('app-script');
-      var code = appScript.textContent;
-      var transformed = Babel.transform(code, {presets:['react']}).code;
-      var execScript = document.createElement('script');
-      execScript.textContent = transformed;
-      document.head.appendChild(execScript);
-    }, 50);
-    return;
-  }
-  var s = document.createElement('script');
-  s.src = LIBS[idx++];
-  s.onload = loadNext;
-  s.onerror = function(e){ 
-    document.getElementById('load-text').innerHTML = 'Lỗi tải thư viện: ' + e.target.src + '<br>Kiểm tra kết nối internet.';
-    document.getElementById('load-spinner').style.display='none';
-  };
-  document.head.appendChild(s);
-}
-loadNext();
-</script>
+<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
 <style>
 :root{--bg:#f7f8fb;--surface:#fff;--border:rgba(15,23,42,0.06);--text:#0f172a;--sub:#475569;--muted:#94a3b8;--blue:#5b8def;--purple:#b89cf0;--pink:#ed9ebe;--green:#6dc88a;--amber:#d4a849;--red:#e57878;--sidebar-w:240px;}
 *{-webkit-font-smoothing:antialiased;box-sizing:border-box;}
@@ -83,996 +52,3863 @@ body{font-family:'Inter',-apple-system,sans-serif;margin:0;color:var(--text);bac
 </style>
 </head>
 <body>
-<div id="root"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#94a3b8;font-family:sans-serif;font-size:14px;gap:12px;"><div id="load-spinner" style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#5b8def;border-radius:50%;animation:spin 1s linear infinite;"></div><div id="load-text">Đang tải...</div></div></div>
+<div id="root"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#94a3b8;font-family:sans-serif;font-size:14px;gap:12px;"><div style="width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#5b8def;border-radius:50%;animation:spin 1s linear infinite;"></div><div>Đang tải...</div></div></div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
-// Timeout 15s - nếu React không load thì hiện lỗi
-setTimeout(function(){
-  var el=document.getElementById('load-text');
-  if(el&&document.getElementById('root').children.length<=1){
-    el.innerHTML='Tải thất bại. Vui lòng:<br>1. Kiểm tra kết nối internet<br>2. Thử mở bằng Chrome/Edge<br>3. Nếu dùng file local, thử deploy lên GitHub Pages';
-    el.style.textAlign='center';el.style.lineHeight='1.8';
-    document.getElementById('load-spinner').style.display='none';
-  }
-},15000);
-</script>
-
-<script type="text/babel-raw" data-presets="react" id="app-script">
-const {useState,useMemo,useEffect,useRef,useCallback}=React;
-const {ComposedChart,AreaChart,Area,LineChart,Line,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Legend,ResponsiveContainer,Cell,PieChart,Pie}=Recharts;
+function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
+const {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback
+} = React;
+const {
+  ComposedChart,
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+  PieChart,
+  Pie
+} = Recharts;
 
 // ============ SECURITY ============
-const PASSWORD_HASH='e5b1b59bf036146508efaf1d26ad6f97c02e943ba3ed0283d8db9d0ffab00fd9';
-const SESSION_KEY='gumac_analytics_v2';
-const SESSION_HOURS=8;
+const PASSWORD_HASH = 'e5b1b59bf036146508efaf1d26ad6f97c02e943ba3ed0283d8db9d0ffab00fd9';
+const SESSION_KEY = 'gumac_analytics_v2';
+const SESSION_HOURS = 8;
 // Encrypted: CSV tổng quan (v1.4)
-const ENC_MAIN='h6ymScn5EoXXQyvxXRMa3foqhkL8bUD4Jf/6+Jxf5EKBojQWi2qGZ+N2fv+1wnsvpFzKVds2FG777pudav3Ve2x3OcxvNl7WWJARcyO7Tbrdgwu2vNxejB0XvEShrmMSk5i8dchyGBldQ0Se74vUjG5t52U+/B++qecj2B/EFYUdSQcIFCFjbyK9sEQlSSrdx3xONX5fe6/8gIcVrFX3X8jwe3Dau/mM66hqfCXGFYf9WRf+a8SPTmJt94Y=';
+const ENC_MAIN = 'h6ymScn5EoXXQyvxXRMa3foqhkL8bUD4Jf/6+Jxf5EKBojQWi2qGZ+N2fv+1wnsvpFzKVds2FG777pudav3Ve2x3OcxvNl7WWJARcyO7Tbrdgwu2vNxejB0XvEShrmMSk5i8dchyGBldQ0Se74vUjG5t52U+/B++qecj2B/EFYUdSQcIFCFjbyK9sEQlSSrdx3xONX5fe6/8gIcVrFX3X8jwe3Dau/mM66hqfCXGFYf9WRf+a8SPTmJt94Y=';
 // Encrypted: CSV kênh social
-const ENC_SOCIAL='Qw38lR/MVr8S0h1iS0p+EEAmfKFVg62Y9aRAB2ivFpaXdFzgRI5mTWXqaJFOtVFrIBEQToSGPBmLrHXPvc3lsdXX+ugGNmxoh3qBsG9g322GY/nKH6ar8IbvTmqVoy/NPNLtlHOHPut2tF2+iwrRS4CD8n4dLOQ9N1KBQ3xK92lN/q5wztQ7guCnawpJawQ2Go9z7vn9iOi/LFcRHtBwHgqBLvm2j+VpjDJT9TU2a7CvNSwlB9VAWPe5Kw8MkRhXGq7xCA==';
-
-async function sha256(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
-async function decrypt(enc,pwd){
-  try{
-    const km=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pwd));
-    const key=await crypto.subtle.importKey('raw',km,{name:'AES-GCM'},false,['decrypt']);
-    const data=Uint8Array.from(atob(enc),c=>c.charCodeAt(0));
-    const iv=data.slice(0,12),authTag=data.slice(12,28),ct=data.slice(28);
-    const combined=new Uint8Array(ct.length+authTag.length);
-    combined.set(ct);combined.set(authTag,ct.length);
-    const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,combined);
+const ENC_SOCIAL = 'Qw38lR/MVr8S0h1iS0p+EEAmfKFVg62Y9aRAB2ivFpaXdFzgRI5mTWXqaJFOtVFrIBEQToSGPBmLrHXPvc3lsdXX+ugGNmxoh3qBsG9g322GY/nKH6ar8IbvTmqVoy/NPNLtlHOHPut2tF2+iwrRS4CD8n4dLOQ9N1KBQ3xK92lN/q5wztQ7guCnawpJawQ2Go9z7vn9iOi/LFcRHtBwHgqBLvm2j+VpjDJT9TU2a7CvNSwlB9VAWPe5Kw8MkRhXGq7xCA==';
+async function sha256(t) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+async function decrypt(enc, pwd) {
+  try {
+    const km = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd));
+    const key = await crypto.subtle.importKey('raw', km, {
+      name: 'AES-GCM'
+    }, false, ['decrypt']);
+    const data = Uint8Array.from(atob(enc), c => c.charCodeAt(0));
+    const iv = data.slice(0, 12),
+      authTag = data.slice(12, 28),
+      ct = data.slice(28);
+    const combined = new Uint8Array(ct.length + authTag.length);
+    combined.set(ct);
+    combined.set(authTag, ct.length);
+    const dec = await crypto.subtle.decrypt({
+      name: 'AES-GCM',
+      iv
+    }, key, combined);
     return new TextDecoder().decode(dec);
-  }catch{return null;}
+  } catch {
+    return null;
+  }
 }
 
 // ============ HELPERS ============
-const pN=v=>{if(!v&&v!==0)return 0;if(typeof v==='number')return v;let s=String(v).trim().replace(/[₫\sVNDđ%]/gi,'');if(s.includes('.')&&s.includes(','))s=s.replace(/\./g,'').replace(',','.');else if(s.includes('.')&&!s.includes(',')&&s.split('.').length>2)s=s.replace(/\./g,'');else if(s.includes(','))s=s.replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n;};
-const pD=v=>{if(!v)return null;const s=String(v).trim();const m1=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);if(m1){let[,d,m,y]=m1;if(y.length===2)y='20'+y;return new Date(parseInt(y),parseInt(m)-1,parseInt(d));}const m2=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T/);if(m2)return new Date(parseInt(m2[1]),parseInt(m2[2])-1,parseInt(m2[3]));const m3=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m3)return new Date(parseInt(m3[1]),parseInt(m3[2])-1,parseInt(m3[3]));const d=new Date(s);return isNaN(d.getTime())?null:d;};
-const fN=(n,d=0)=>n==null||isNaN(n)?'0':n.toLocaleString('vi-VN',{maximumFractionDigits:d,minimumFractionDigits:d});
-const fK=n=>{if(!n&&n!==0)return'0';const a=Math.abs(n);if(a>=1e9)return(n/1e9).toFixed(2)+'tỷ';if(a>=1e6)return(n/1e6).toFixed(1)+'tr';if(a>=1e3)return(n/1e3).toFixed(1)+'k';return fN(n);};
-const fPct=(n,d=2)=>n==null||isNaN(n)?'0%':(n*100).toFixed(d)+'%';
-const fDate=d=>d?`${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`:'';
-const fDateFull=d=>d?`${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`:'';
-const pctChg=(a,b)=>(!b||b===0)?null:((a-b)/b)*100;
-const iDate=d=>d?`${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`:'';
+const pN = v => {
+  if (!v && v !== 0) return 0;
+  if (typeof v === 'number') return v;
+  let s = String(v).trim().replace(/[₫\sVNDđ%]/gi, '');
+  if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');else if (s.includes('.') && !s.includes(',') && s.split('.').length > 2) s = s.replace(/\./g, '');else if (s.includes(',')) s = s.replace(',', '.');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+};
+const pD = v => {
+  if (!v) return null;
+  const s = String(v).trim();
+  const m1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m1) {
+    let [, d, m, y] = m1;
+    if (y.length === 2) y = '20' + y;
+    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  }
+  const m2 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})T/);
+  if (m2) return new Date(parseInt(m2[1]), parseInt(m2[2]) - 1, parseInt(m2[3]));
+  const m3 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m3) return new Date(parseInt(m3[1]), parseInt(m3[2]) - 1, parseInt(m3[3]));
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+};
+const fN = (n, d = 0) => n == null || isNaN(n) ? '0' : n.toLocaleString('vi-VN', {
+  maximumFractionDigits: d,
+  minimumFractionDigits: d
+});
+const fK = n => {
+  if (!n && n !== 0) return '0';
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n / 1e9).toFixed(2) + 'tỷ';
+  if (a >= 1e6) return (n / 1e6).toFixed(1) + 'tr';
+  if (a >= 1e3) return (n / 1e3).toFixed(1) + 'k';
+  return fN(n);
+};
+const fPct = (n, d = 2) => n == null || isNaN(n) ? '0%' : (n * 100).toFixed(d) + '%';
+const fDate = d => d ? `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}` : '';
+const fDateFull = d => d ? `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}` : '';
+const pctChg = (a, b) => !b || b === 0 ? null : (a - b) / b * 100;
+const iDate = d => d ? `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}` : '';
 
 // ============ ICONS ============
-const Ic=({d,s=16,c='',sw=2})=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" className={c}>{d}</svg>;
-const IHome=p=><Ic {...p} d={<><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>}/>;
-const ISocial=p=><Ic {...p} d={<><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></>}/>;
-const ILock=p=><Ic {...p} d={<><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}/>;
-const IEye=p=><Ic {...p} d={<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}/>;
-const IEyeOff=p=><Ic {...p} d={<><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>}/>;
-const IStar=p=><Ic {...p} d={<path d="M12 3l1.88 5.76a2 2 0 0 0 1.36 1.36L21 12l-5.76 1.88a2 2 0 0 0-1.36 1.36L12 21l-1.88-5.76a2 2 0 0 0-1.36-1.36L3 12l5.76-1.88a2 2 0 0 0 1.36-1.36L12 3z"/>}/>;
-const IUp=p=><Ic {...p} d={<><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></>}/>;
-const IDown=p=><Ic {...p} d={<><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></>}/>;
-const IMinus=p=><Ic {...p} d={<line x1="5" y1="12" x2="19" y2="12"/>}/>;
-const IRefresh=p=><Ic {...p} d={<><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>}/>;
-const ILogout=p=><Ic {...p} d={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>}/>;
-const IFilter=p=><Ic {...p} d={<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>}/>;
-const IChart=p=><Ic {...p} d={<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>}/>;
-const IAlert=p=><Ic {...p} d={<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>}/>;
-const ICheck=p=><Ic {...p} d={<polyline points="20 6 9 17 4 12"/>}/>;
-const IUpload=p=><Ic {...p} d={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>}/>;
+const Ic = ({
+  d,
+  s = 16,
+  c = '',
+  sw = 2
+}) => /*#__PURE__*/React.createElement("svg", {
+  width: s,
+  height: s,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: sw,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  className: c
+}, d);
+const IHome = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "9 22 9 12 15 12 15 22"
+  }))
+}));
+const ISocial = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+    cx: "18",
+    cy: "5",
+    r: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "6",
+    cy: "12",
+    r: "3"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "18",
+    cy: "19",
+    r: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "8.59",
+    y1: "13.51",
+    x2: "15.42",
+    y2: "17.49"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "15.41",
+    y1: "6.51",
+    x2: "8.59",
+    y2: "10.49"
+  }))
+}));
+const ILock = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "11",
+    width: "18",
+    height: "11",
+    rx: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M7 11V7a5 5 0 0 1 10 0v4"
+  }))
+}));
+const IEye = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "3"
+  }))
+}));
+const IEyeOff = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "1",
+    y1: "1",
+    x2: "23",
+    y2: "23"
+  }))
+}));
+const IStar = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement("path", {
+    d: "M12 3l1.88 5.76a2 2 0 0 0 1.36 1.36L21 12l-5.76 1.88a2 2 0 0 0-1.36 1.36L12 21l-1.88-5.76a2 2 0 0 0-1.36-1.36L3 12l5.76-1.88a2 2 0 0 0 1.36-1.36L12 3z"
+  })
+}));
+const IUp = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("polyline", {
+    points: "22 7 13.5 15.5 8.5 10.5 2 17"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "16 7 22 7 22 13"
+  }))
+}));
+const IDown = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("polyline", {
+    points: "22 17 13.5 8.5 8.5 13.5 2 7"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "16 17 22 17 22 11"
+  }))
+}));
+const IMinus = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement("line", {
+    x1: "5",
+    y1: "12",
+    x2: "19",
+    y2: "12"
+  })
+}));
+const IRefresh = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("polyline", {
+    points: "23 4 23 10 17 10"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "1 20 1 14 7 14"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+  }))
+}));
+const ILogout = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "16 17 21 12 16 7"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "21",
+    y1: "12",
+    x2: "9",
+    y2: "12"
+  }))
+}));
+const IFilter = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement("polygon", {
+    points: "22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+  })
+}));
+const IChart = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("line", {
+    x1: "18",
+    y1: "20",
+    x2: "18",
+    y2: "10"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "20",
+    x2: "12",
+    y2: "4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "6",
+    y1: "20",
+    x2: "6",
+    y2: "14"
+  }))
+}));
+const IAlert = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "10"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "8",
+    x2: "12",
+    y2: "12"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "16",
+    x2: "12.01",
+    y2: "16"
+  }))
+}));
+const ICheck = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement("polyline", {
+    points: "20 6 9 17 4 12"
+  })
+}));
+const IUpload = p => /*#__PURE__*/React.createElement(Ic, _extends({}, p, {
+  d: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("path", {
+    d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "17 8 12 3 7 8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "3",
+    x2: "12",
+    y2: "15"
+  }))
+}));
 
 // ============ SHARED COMPONENTS ============
-function DeltaBadge({v,suffix='%'}){
-  if(v==null)return<span style={{color:'var(--muted)',fontSize:11}}>—</span>;
-  const up=v>0,dn=v<0,col=up?'var(--green)':dn?'var(--red)':'var(--muted)';
-  return<span style={{color:col,fontSize:11,fontWeight:600,display:'inline-flex',alignItems:'center',gap:2}}>
-    {up?<IUp s={11} sw={2.5}/>:dn?<IDown s={11} sw={2.5}/>:<IMinus s={11} sw={2.5}/>}
-    {v>0?'+':''}{v.toFixed(1)}{suffix}
-  </span>;
+function DeltaBadge({
+  v,
+  suffix = '%'
+}) {
+  if (v == null) return /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'var(--muted)',
+      fontSize: 11
+    }
+  }, "\u2014");
+  const up = v > 0,
+    dn = v < 0,
+    col = up ? 'var(--green)' : dn ? 'var(--red)' : 'var(--muted)';
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: col,
+      fontSize: 11,
+      fontWeight: 600,
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 2
+    }
+  }, up ? /*#__PURE__*/React.createElement(IUp, {
+    s: 11,
+    sw: 2.5
+  }) : dn ? /*#__PURE__*/React.createElement(IDown, {
+    s: 11,
+    sw: 2.5
+  }) : /*#__PURE__*/React.createElement(IMinus, {
+    s: 11,
+    sw: 2.5
+  }), v > 0 ? '+' : '', v.toFixed(1), suffix);
 }
-function KpiCard({label,value,sub,change,accent,delay=0}){
-  return<div className="surface fu" style={{padding:18,position:'relative',overflow:'hidden',animationDelay:`${delay}ms`}}>
-    <div style={{position:'absolute',top:0,right:0,width:80,height:80,borderRadius:'50%',background:accent,opacity:.35,filter:'blur(24px)'}}/>
-    <div style={{position:'relative'}}>
-      <div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>{label}</div>
-      <div className="df ticker" style={{fontSize:22,fontWeight:800,color:'var(--text)',marginBottom:4}}>{value}</div>
-      {sub&&<div style={{fontSize:11,color:'var(--muted)',marginBottom:8}}>{sub}</div>}
-      <DeltaBadge v={change}/>
-    </div>
-  </div>;
+function KpiCard({
+  label,
+  value,
+  sub,
+  change,
+  accent,
+  delay = 0
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "surface fu",
+    style: {
+      padding: 18,
+      position: 'relative',
+      overflow: 'hidden',
+      animationDelay: `${delay}ms`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 80,
+      height: 80,
+      borderRadius: '50%',
+      background: accent,
+      opacity: .35,
+      filter: 'blur(24px)'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 8
+    }
+  }, label), /*#__PURE__*/React.createElement("div", {
+    className: "df ticker",
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: 'var(--text)',
+      marginBottom: 4
+    }
+  }, value), sub && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--muted)',
+      marginBottom: 8
+    }
+  }, sub), /*#__PURE__*/React.createElement(DeltaBadge, {
+    v: change
+  })));
 }
-function FilterSelect({label,value,onChange,options}){
-  return<div>
-    <div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:6}}>{label}</div>
-    <select value={value} onChange={e=>onChange(e.target.value)} className="input-soft" style={{cursor:'pointer',paddingRight:32}}>
-      {options.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
-    </select>
-  </div>;
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options
+}) {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 6
+    }
+  }, label), /*#__PURE__*/React.createElement("select", {
+    value: value,
+    onChange: e => onChange(e.target.value),
+    className: "input-soft",
+    style: {
+      cursor: 'pointer',
+      paddingRight: 32
+    }
+  }, options.map(o => /*#__PURE__*/React.createElement("option", {
+    key: o.v,
+    value: o.v
+  }, o.l))));
 }
-function SectionHead({icon,title,sub}){
-  return<div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18}}>
-    <div style={{width:32,height:32,borderRadius:10,background:'rgba(91,141,239,.1)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--blue)',flexShrink:0}}>{icon}</div>
-    <div><div className="df" style={{fontWeight:700,fontSize:16,color:'var(--text)'}}>{title}</div>{sub&&<div style={{fontSize:11,color:'var(--muted)',marginTop:2}}>{sub}</div>}</div>
-  </div>;
+function SectionHead({
+  icon,
+  title,
+  sub
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      background: 'rgba(91,141,239,.1)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'var(--blue)',
+      flexShrink: 0
+    }
+  }, icon), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "df",
+    style: {
+      fontWeight: 700,
+      fontSize: 16,
+      color: 'var(--text)'
+    }
+  }, title), sub && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--muted)',
+      marginTop: 2
+    }
+  }, sub)));
 }
-function LoadError({msg}){
-  return<div style={{padding:'12px 16px',borderRadius:12,background:'rgba(229,120,120,.08)',border:'1px solid rgba(229,120,120,.2)',color:'#c44545',fontSize:13,display:'flex',alignItems:'center',gap:8,marginTop:12}}>
-    <IAlert s={14}/>{msg}
-  </div>;
+function LoadError({
+  msg
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 16px',
+      borderRadius: 12,
+      background: 'rgba(229,120,120,.08)',
+      border: '1px solid rgba(229,120,120,.2)',
+      color: '#c44545',
+      fontSize: 13,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement(IAlert, {
+    s: 14
+  }), msg);
 }
-function LoadOk({msg}){
-  return<div style={{padding:'12px 16px',borderRadius:12,background:'rgba(109,200,138,.08)',border:'1px solid rgba(109,200,138,.2)',color:'#3f9b5d',fontSize:13,display:'flex',alignItems:'center',gap:8,marginTop:12}}>
-    <ICheck s={14}/>{msg}
-  </div>;
+function LoadOk({
+  msg
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 16px',
+      borderRadius: 12,
+      background: 'rgba(109,200,138,.08)',
+      border: '1px solid rgba(109,200,138,.2)',
+      color: '#3f9b5d',
+      fontSize: 13,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 12
+    }
+  }, /*#__PURE__*/React.createElement(ICheck, {
+    s: 14
+  }), msg);
 }
 
 // ============ LOGIN ============
-function LoginGate({onSuccess}){
-  const[pwd,setPwd]=useState('');const[show,setShow]=useState(false);
-  const[err,setErr]=useState('');const[loading,setLoading]=useState(false);const[shake,setShake]=useState(false);
-  const ref=useRef();
-  useEffect(()=>{ref.current&&ref.current.focus();},[]);
-  const submit=async e=>{
-    if(e)e.preventDefault();
-    const t=pwd.trim();
-    if(!t){setErr('Vui lòng nhập mật khẩu.');setShake(true);setTimeout(()=>setShake(false),500);return;}
+function LoginGate({
+  onSuccess
+}) {
+  const [pwd, setPwd] = useState('');
+  const [show, setShow] = useState(false);
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
+  const ref = useRef();
+  useEffect(() => {
+    ref.current && ref.current.focus();
+  }, []);
+  const submit = async e => {
+    if (e) e.preventDefault();
+    const t = pwd.trim();
+    if (!t) {
+      setErr('Vui lòng nhập mật khẩu.');
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      return;
+    }
     setLoading(true);
-    try{
-      const h=await sha256(t);
-      if(h===PASSWORD_HASH){
-        const[mainUrl,socialUrl]=await Promise.all([decrypt(ENC_MAIN,t),decrypt(ENC_SOCIAL,t)]);
-        if(!mainUrl||!socialUrl){setErr('Lỗi giải mã.');setLoading(false);return;}
-        try{const ex=Date.now()+SESSION_HOURS*3600*1000;sessionStorage.setItem(SESSION_KEY,JSON.stringify({ok:true,expiry:ex,k:t}));}catch{}
-        onSuccess({mainUrl,socialUrl,pwd:t});
-      }else{
-        setErr('Mật khẩu không đúng.');setShake(true);setTimeout(()=>setShake(false),500);
-        ref.current&&ref.current.select();
+    try {
+      const h = await sha256(t);
+      if (h === PASSWORD_HASH) {
+        const [mainUrl, socialUrl] = await Promise.all([decrypt(ENC_MAIN, t), decrypt(ENC_SOCIAL, t)]);
+        if (!mainUrl || !socialUrl) {
+          setErr('Lỗi giải mã.');
+          setLoading(false);
+          return;
+        }
+        try {
+          const ex = Date.now() + SESSION_HOURS * 3600 * 1000;
+          sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+            ok: true,
+            expiry: ex,
+            k: t
+          }));
+        } catch {}
+        onSuccess({
+          mainUrl,
+          socialUrl,
+          pwd: t
+        });
+      } else {
+        setErr('Mật khẩu không đúng.');
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        ref.current && ref.current.select();
       }
-    }catch(e){setErr('Lỗi: '+e.message);}
-    finally{setLoading(false);}
+    } catch (e) {
+      setErr('Lỗi: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
   };
-  return<div className="login-bg" style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
-    <div className={shake?'shake':''} style={{width:'100%',maxWidth:420}}>
-      <div className="surface-el glass fu" style={{padding:36}}>
-        <div style={{textAlign:'center',marginBottom:28}}>
-          <div style={{width:60,height:60,borderRadius:18,background:'linear-gradient(135deg,#c7dafc,#d9c8f7,#f7c8dc)',margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 24px rgba(184,156,240,.3)'}}>
-            <ILock s={26} c="text-white" sw={2.5}/>
-          </div>
-          <div className="df shimmer" style={{fontSize:22,fontWeight:800}}>GUMAC Analytics</div>
-          <div style={{fontSize:13,color:'var(--muted)',marginTop:6}}>Nhập mật khẩu để truy cập</div>
-        </div>
-        <form onSubmit={submit}>
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--sub)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>Mật khẩu</div>
-            <div style={{position:'relative'}}>
-              <input ref={ref} type={show?'text':'password'} value={pwd} onChange={e=>{setPwd(e.target.value);setErr('');}}
-                className="input-soft" style={{width:'100%',paddingRight:44,fontSize:15}} placeholder="Nhập mật khẩu..."/>
-              <button type="button" onClick={()=>setShow(!show)}
-                style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',width:32,height:32,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',background:'none',border:'none',cursor:'pointer',color:'var(--muted)'}}>
-                {show?<IEyeOff s={17}/>:<IEye s={17}/>}
-              </button>
-            </div>
-            {err&&<div style={{marginTop:8,fontSize:12,color:'var(--red)',display:'flex',alignItems:'center',gap:6}}><IAlert s={12}/>{err}</div>}
-          </div>
-          <button type="submit" disabled={loading} className="btn-primary" style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-            {loading?<><IRefresh s={15} c="spin"/>Đang xác thực...</>:<><IStar s={15}/>Truy cập Dashboard</>}
-          </button>
-        </form>
-        <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid rgba(15,23,42,.05)',textAlign:'center',fontSize:11,color:'var(--muted)'}}>Phiên đăng nhập: {SESSION_HOURS} giờ</div>
-      </div>
-    </div>
-  </div>;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "login-bg",
+    style: {
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: shake ? 'shake' : '',
+    style: {
+      width: '100%',
+      maxWidth: 420
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "surface-el glass fu",
+    style: {
+      padding: 36
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      marginBottom: 28
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 60,
+      height: 60,
+      borderRadius: 18,
+      background: 'linear-gradient(135deg,#c7dafc,#d9c8f7,#f7c8dc)',
+      margin: '0 auto 16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      boxShadow: '0 8px 24px rgba(184,156,240,.3)'
+    }
+  }, /*#__PURE__*/React.createElement(ILock, {
+    s: 26,
+    c: "text-white",
+    sw: 2.5
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "df shimmer",
+    style: {
+      fontSize: 22,
+      fontWeight: 800
+    }
+  }, "GUMAC Analytics"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: 'var(--muted)',
+      marginTop: 6
+    }
+  }, "Nh\u1EADp m\u1EADt kh\u1EA9u \u0111\u1EC3 truy c\u1EADp")), /*#__PURE__*/React.createElement("form", {
+    onSubmit: submit
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: 'var(--sub)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 8
+    }
+  }, "M\u1EADt kh\u1EA9u"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    ref: ref,
+    type: show ? 'text' : 'password',
+    value: pwd,
+    onChange: e => {
+      setPwd(e.target.value);
+      setErr('');
+    },
+    className: "input-soft",
+    style: {
+      width: '100%',
+      paddingRight: 44,
+      fontSize: 15
+    },
+    placeholder: "Nh\u1EADp m\u1EADt kh\u1EA9u..."
+  }), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: () => setShow(!show),
+    style: {
+      position: 'absolute',
+      right: 8,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: 'var(--muted)'
+    }
+  }, show ? /*#__PURE__*/React.createElement(IEyeOff, {
+    s: 17
+  }) : /*#__PURE__*/React.createElement(IEye, {
+    s: 17
+  }))), err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8,
+      fontSize: 12,
+      color: 'var(--red)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement(IAlert, {
+    s: 12
+  }), err)), /*#__PURE__*/React.createElement("button", {
+    type: "submit",
+    disabled: loading,
+    className: "btn-primary",
+    style: {
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8
+    }
+  }, loading ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(IRefresh, {
+    s: 15,
+    c: "spin"
+  }), "\u0110ang x\xE1c th\u1EF1c...") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(IStar, {
+    s: 15
+  }), "Truy c\u1EADp Dashboard"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 20,
+      paddingTop: 16,
+      borderTop: '1px solid rgba(15,23,42,.05)',
+      textAlign: 'center',
+      fontSize: 11,
+      color: 'var(--muted)'
+    }
+  }, "Phi\xEAn \u0111\u0103ng nh\u1EADp: ", SESSION_HOURS, " gi\u1EDD"))));
 }
 
 // ============ MAIN APP ============
-function App(){
-  const[authed,setAuthed]=useState(false);
-  const[urls,setUrls]=useState(null);
-  const[restoring,setRestoring]=useState(true);
-  const[activeMenu,setActiveMenu]=useState('overview');
-
-  useEffect(()=>{
-    (async()=>{
-      try{
-        const s=sessionStorage.getItem(SESSION_KEY);
-        if(!s){setRestoring(false);return;}
-        const{ok,expiry,k}=JSON.parse(s);
-        if(!ok||expiry<=Date.now()||!k){sessionStorage.removeItem(SESSION_KEY);setRestoring(false);return;}
-        const[mainUrl,socialUrl]=await Promise.all([decrypt(ENC_MAIN,k),decrypt(ENC_SOCIAL,k)]);
-        if(mainUrl&&socialUrl){setUrls({mainUrl,socialUrl,pwd:k});setAuthed(true);}
-        else sessionStorage.removeItem(SESSION_KEY);
-      }catch{sessionStorage.removeItem(SESSION_KEY);}
-      finally{setRestoring(false);}
+function App() {
+  const [authed, setAuthed] = useState(false);
+  const [urls, setUrls] = useState(null);
+  const [restoring, setRestoring] = useState(true);
+  const [activeMenu, setActiveMenu] = useState('overview');
+  useEffect(() => {
+    (async () => {
+      try {
+        const s = sessionStorage.getItem(SESSION_KEY);
+        if (!s) {
+          setRestoring(false);
+          return;
+        }
+        const {
+          ok,
+          expiry,
+          k
+        } = JSON.parse(s);
+        if (!ok || expiry <= Date.now() || !k) {
+          sessionStorage.removeItem(SESSION_KEY);
+          setRestoring(false);
+          return;
+        }
+        const [mainUrl, socialUrl] = await Promise.all([decrypt(ENC_MAIN, k), decrypt(ENC_SOCIAL, k)]);
+        if (mainUrl && socialUrl) {
+          setUrls({
+            mainUrl,
+            socialUrl,
+            pwd: k
+          });
+          setAuthed(true);
+        } else sessionStorage.removeItem(SESSION_KEY);
+      } catch {
+        sessionStorage.removeItem(SESSION_KEY);
+      } finally {
+        setRestoring(false);
+      }
     })();
-  },[]);
-
-  if(restoring)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--muted)',fontSize:13}}>Đang khởi tạo...</div>;
-  if(!authed)return<LoginGate onSuccess={u=>{setUrls(u);setAuthed(true);}}/>;
-
-  const logout=()=>{sessionStorage.removeItem(SESSION_KEY);setUrls(null);setAuthed(false);};
-
-  const MENU=[
-    {id:'overview',label:'Tổng quan',icon:<IHome s={16}/>,badge:null},
-    {id:'social',label:'Kênh Social',icon:<ISocial s={16}/>,badge:'FB'},
-  ];
-
-  return<div style={{display:'flex',minHeight:'100vh'}}>
-    {/* SIDEBAR */}
-    <div className="sidebar">
-      <div style={{padding:'20px 16px 12px'}}>
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
-          <div style={{width:36,height:36,borderRadius:12,background:'linear-gradient(135deg,#c7dafc,#d9c8f7,#f7c8dc)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 4px 12px rgba(184,156,240,.25)'}}>
-            <IStar s={18} c="text-white" sw={2.5}/>
-          </div>
-          <div>
-            <div className="df shimmer" style={{fontSize:15,fontWeight:800}}>GUMAC</div>
-            <div style={{fontSize:10,color:'var(--muted)',fontWeight:500}}>Analytics Platform</div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{padding:'0 0 8px'}}>
-        <div className="nav-section">Menu</div>
-        {MENU.map(m=>(
-          <div key={m.id} className={`nav-item${activeMenu===m.id?' active':''}`} onClick={()=>setActiveMenu(m.id)}>
-            <span style={{color:'inherit'}}>{m.icon}</span>
-            <span style={{flex:1}}>{m.label}</span>
-            {m.badge&&<span style={{fontSize:9,fontWeight:700,padding:'2px 6px',borderRadius:6,background:'rgba(91,141,239,.12)',color:'var(--blue)'}}>{m.badge}</span>}
-          </div>
-        ))}
-      </div>
-
-      <div style={{marginTop:'auto',padding:'12px 8px 16px',borderTop:'1px solid var(--border)'}}>
-        <div className="nav-item" onClick={logout}>
-          <ILogout s={15}/>
-          <span>Đăng xuất</span>
-        </div>
-      </div>
-    </div>
-
-    {/* MAIN AREA */}
-    <div className="main-area" style={{flex:1,overflow:'auto'}}>
-      {activeMenu==='overview'&&<OverviewModule csvUrl={urls?.mainUrl}/>}
-      {activeMenu==='social'&&<SocialModule csvUrl={urls?.socialUrl}/>}
-    </div>
-  </div>;
+  }, []);
+  if (restoring) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      color: 'var(--muted)',
+      fontSize: 13
+    }
+  }, "\u0110ang kh\u1EDFi t\u1EA1o...");
+  if (!authed) return /*#__PURE__*/React.createElement(LoginGate, {
+    onSuccess: u => {
+      setUrls(u);
+      setAuthed(true);
+    }
+  });
+  const logout = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setUrls(null);
+    setAuthed(false);
+  };
+  const MENU = [{
+    id: 'overview',
+    label: 'Tổng quan',
+    icon: /*#__PURE__*/React.createElement(IHome, {
+      s: 16
+    }),
+    badge: null
+  }, {
+    id: 'social',
+    label: 'Kênh Social',
+    icon: /*#__PURE__*/React.createElement(ISocial, {
+      s: 16
+    }),
+    badge: 'FB'
+  }];
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      minHeight: '100vh'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sidebar"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '20px 16px 12px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      background: 'linear-gradient(135deg,#c7dafc,#d9c8f7,#f7c8dc)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      boxShadow: '0 4px 12px rgba(184,156,240,.25)'
+    }
+  }, /*#__PURE__*/React.createElement(IStar, {
+    s: 18,
+    c: "text-white",
+    sw: 2.5
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "df shimmer",
+    style: {
+      fontSize: 15,
+      fontWeight: 800
+    }
+  }, "GUMAC"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: 'var(--muted)',
+      fontWeight: 500
+    }
+  }, "Analytics Platform")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '0 0 8px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "nav-section"
+  }, "Menu"), MENU.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    className: `nav-item${activeMenu === m.id ? ' active' : ''}`,
+    onClick: () => setActiveMenu(m.id)
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: 'inherit'
+    }
+  }, m.icon), /*#__PURE__*/React.createElement("span", {
+    style: {
+      flex: 1
+    }
+  }, m.label), m.badge && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      fontWeight: 700,
+      padding: '2px 6px',
+      borderRadius: 6,
+      background: 'rgba(91,141,239,.12)',
+      color: 'var(--blue)'
+    }
+  }, m.badge)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 'auto',
+      padding: '12px 8px 16px',
+      borderTop: '1px solid var(--border)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "nav-item",
+    onClick: logout
+  }, /*#__PURE__*/React.createElement(ILogout, {
+    s: 15
+  }), /*#__PURE__*/React.createElement("span", null, "\u0110\u0103ng xu\u1EA5t")))), /*#__PURE__*/React.createElement("div", {
+    className: "main-area",
+    style: {
+      flex: 1,
+      overflow: 'auto'
+    }
+  }, activeMenu === 'overview' && /*#__PURE__*/React.createElement(OverviewModule, {
+    csvUrl: urls?.mainUrl
+  }), activeMenu === 'social' && /*#__PURE__*/React.createElement(SocialModule, {
+    csvUrl: urls?.socialUrl
+  })));
 }
 
 // ============================================================
 // MODULE 1: TỔNG QUAN (v1.4 — toàn bộ logic giữ nguyên)
 // ============================================================
-const G_INFO={
-  B1:{color:'#6dc88a',bg:'#e8f5ee',border:'#b9e6c9',label:'Xuất sắc',cond:'Traffic ✓ • CRV ✓ • ATV ✓',action:'Duy trì & nhân rộng mô hình. Khen thưởng, làm case study.',trade:'Duy trì set-up trưng bày. Triển khai loyalty/VIP. Đề xuất nhân rộng mô hình.',digital:'Tăng ngân sách ads 15-20%. Chạy retargeting khách đã ghé. Tối ưu Google My Business.',content:'Sản xuất content "store tour" viral. Quay testimonial khách. Làm case study training.'},
-  B2:{color:'#d4a849',bg:'#fdf6e3',border:'#f8dcae',label:'Tốt - thiếu ATV',cond:'Traffic ✓ • CRV ✓ • ATV ✗',action:'Đào tạo upsell/cross-sell. Trưng bày sản phẩm bổ sung tại quầy thu ngân.',trade:'Set-up combo "Mua kèm tiết kiệm". Trưng bày sản phẩm cao giá vị trí hot.',digital:'Push notification voucher tăng đơn. Chạy ads sản phẩm premium.',content:'Content highlight giá trị sản phẩm cao cấp. Video so sánh "đáng đầu tư".'},
-  B3:{color:'#e57878',bg:'#fdecec',border:'#f5b9b9',label:'Kém - chốt đơn yếu',cond:'Traffic ✓ • CRV ✗ • ATV ✓',action:'Tập trung kỹ năng tư vấn & chốt đơn. Rà soát quy trình bán hàng.',trade:'Treo POSM CTA mạnh. Flash sale theo khung giờ.',digital:'Retargeting khách đã ghé store. SMS/Zalo gửi voucher có hạn.',content:'Content tạo urgency: countdown sale, số lượng có hạn.'},
-  B4:{color:'#e57878',bg:'#fdecec',border:'#f5b9b9',label:'Kém - chuyển đổi yếu',cond:'Traffic ✓ • CRV ✗ • ATV ✗',action:'Audit toàn diện: nhân sự, sản phẩm, giá, kỹ năng. Ưu tiên xử lý.',trade:'PHỤC HỒI: refresh merchandise. Tung khuyến mãi sốc 1-2 tuần.',digital:'Chạy ads "Sale lớn nhất năm" rầm rộ. Booking influencer địa phương.',content:'Mời KOL/KOC địa phương review. Content "Cửa hàng được làm mới".'},
-  B5:{color:'#d4a849',bg:'#fdf6e3',border:'#f8dcae',label:'Tốt - thiếu Traffic',cond:'Traffic ✗ • CRV ✓ • ATV ✓',action:'Nội tại tốt nhưng thiếu khách. Tăng marketing local.',trade:'Treo banner ngoài đường. Phát flyer khu dân cư bán kính 1-2km.',digital:'Tăng ads Facebook/TikTok target bán kính 3-5km. Google ads keyword địa phương.',content:'Hợp tác KOL/KOC địa phương review store. Video "khám phá cửa hàng".'},
-  B6:{color:'#e57878',bg:'#fdecec',border:'#f5b9b9',label:'Kém - 2 mặt yếu',cond:'Traffic ✗ • CRV ✓ • ATV ✗',action:'Cần kéo khách + tăng giá trị đơn. Combo, mua kèm, ads local.',trade:'Combo kép. Set-up "Combo 3 món chỉ 299k". Voucher "Mua 2 tặng 1".',digital:'Chạy ads combo target local. Livestream tại store.',content:'Content "Combo siêu hời". Livestream demo combo.'},
-  B7:{color:'#e57878',bg:'#fdecec',border:'#f5b9b9',label:'Kém - chỉ bán giá trị cao',cond:'Traffic ✗ • CRV ✗ • ATV ✓',action:'Lượng khách & tỷ lệ chốt đều thấp. Rà soát tổng thể.',trade:'Đa dạng hóa giá: thêm entry-product. Event sampling miễn phí.',digital:'Ads sản phẩm entry giá thấp. Booking influencer phổ thông.',content:'Reframing: từ "luxury" sang "premium ai cũng dùng được".'},
-  B8:{color:'#c95757',bg:'#fce0e0',border:'#e57878',label:'Báo động - cần can thiệp',cond:'Traffic ✗ • CRV ✗ • ATV ✗',action:'🚨 KHẨN CẤP. Kế hoạch đặc biệt: thay quản lý, tái đào tạo, đánh giá đóng cửa.',trade:'🚨 STOP marketing. FIX vận hành trước. Sau đó relaunch như cửa hàng mới.',digital:'🚨 Tạm ngưng ads. Khi relaunch: ngân sách boost lớn 2 tuần.',content:'🚨 Chuẩn bị campaign relaunch: storytelling "thay đổi", grand opening.'},
+const G_INFO = {
+  B1: {
+    color: '#6dc88a',
+    bg: '#e8f5ee',
+    border: '#b9e6c9',
+    label: 'Xuất sắc',
+    cond: 'Traffic ✓ • CRV ✓ • ATV ✓',
+    action: 'Duy trì & nhân rộng mô hình. Khen thưởng, làm case study.',
+    trade: 'Duy trì set-up trưng bày. Triển khai loyalty/VIP. Đề xuất nhân rộng mô hình.',
+    digital: 'Tăng ngân sách ads 15-20%. Chạy retargeting khách đã ghé. Tối ưu Google My Business.',
+    content: 'Sản xuất content "store tour" viral. Quay testimonial khách. Làm case study training.'
+  },
+  B2: {
+    color: '#d4a849',
+    bg: '#fdf6e3',
+    border: '#f8dcae',
+    label: 'Tốt - thiếu ATV',
+    cond: 'Traffic ✓ • CRV ✓ • ATV ✗',
+    action: 'Đào tạo upsell/cross-sell. Trưng bày sản phẩm bổ sung tại quầy thu ngân.',
+    trade: 'Set-up combo "Mua kèm tiết kiệm". Trưng bày sản phẩm cao giá vị trí hot.',
+    digital: 'Push notification voucher tăng đơn. Chạy ads sản phẩm premium.',
+    content: 'Content highlight giá trị sản phẩm cao cấp. Video so sánh "đáng đầu tư".'
+  },
+  B3: {
+    color: '#e57878',
+    bg: '#fdecec',
+    border: '#f5b9b9',
+    label: 'Kém - chốt đơn yếu',
+    cond: 'Traffic ✓ • CRV ✗ • ATV ✓',
+    action: 'Tập trung kỹ năng tư vấn & chốt đơn. Rà soát quy trình bán hàng.',
+    trade: 'Treo POSM CTA mạnh. Flash sale theo khung giờ.',
+    digital: 'Retargeting khách đã ghé store. SMS/Zalo gửi voucher có hạn.',
+    content: 'Content tạo urgency: countdown sale, số lượng có hạn.'
+  },
+  B4: {
+    color: '#e57878',
+    bg: '#fdecec',
+    border: '#f5b9b9',
+    label: 'Kém - chuyển đổi yếu',
+    cond: 'Traffic ✓ • CRV ✗ • ATV ✗',
+    action: 'Audit toàn diện: nhân sự, sản phẩm, giá, kỹ năng. Ưu tiên xử lý.',
+    trade: 'PHỤC HỒI: refresh merchandise. Tung khuyến mãi sốc 1-2 tuần.',
+    digital: 'Chạy ads "Sale lớn nhất năm" rầm rộ. Booking influencer địa phương.',
+    content: 'Mời KOL/KOC địa phương review. Content "Cửa hàng được làm mới".'
+  },
+  B5: {
+    color: '#d4a849',
+    bg: '#fdf6e3',
+    border: '#f8dcae',
+    label: 'Tốt - thiếu Traffic',
+    cond: 'Traffic ✗ • CRV ✓ • ATV ✓',
+    action: 'Nội tại tốt nhưng thiếu khách. Tăng marketing local.',
+    trade: 'Treo banner ngoài đường. Phát flyer khu dân cư bán kính 1-2km.',
+    digital: 'Tăng ads Facebook/TikTok target bán kính 3-5km. Google ads keyword địa phương.',
+    content: 'Hợp tác KOL/KOC địa phương review store. Video "khám phá cửa hàng".'
+  },
+  B6: {
+    color: '#e57878',
+    bg: '#fdecec',
+    border: '#f5b9b9',
+    label: 'Kém - 2 mặt yếu',
+    cond: 'Traffic ✗ • CRV ✓ • ATV ✗',
+    action: 'Cần kéo khách + tăng giá trị đơn. Combo, mua kèm, ads local.',
+    trade: 'Combo kép. Set-up "Combo 3 món chỉ 299k". Voucher "Mua 2 tặng 1".',
+    digital: 'Chạy ads combo target local. Livestream tại store.',
+    content: 'Content "Combo siêu hời". Livestream demo combo.'
+  },
+  B7: {
+    color: '#e57878',
+    bg: '#fdecec',
+    border: '#f5b9b9',
+    label: 'Kém - chỉ bán giá trị cao',
+    cond: 'Traffic ✗ • CRV ✗ • ATV ✓',
+    action: 'Lượng khách & tỷ lệ chốt đều thấp. Rà soát tổng thể.',
+    trade: 'Đa dạng hóa giá: thêm entry-product. Event sampling miễn phí.',
+    digital: 'Ads sản phẩm entry giá thấp. Booking influencer phổ thông.',
+    content: 'Reframing: từ "luxury" sang "premium ai cũng dùng được".'
+  },
+  B8: {
+    color: '#c95757',
+    bg: '#fce0e0',
+    border: '#e57878',
+    label: 'Báo động - cần can thiệp',
+    cond: 'Traffic ✗ • CRV ✗ • ATV ✗',
+    action: '🚨 KHẨN CẤP. Kế hoạch đặc biệt: thay quản lý, tái đào tạo, đánh giá đóng cửa.',
+    trade: '🚨 STOP marketing. FIX vận hành trước. Sau đó relaunch như cửa hàng mới.',
+    digital: '🚨 Tạm ngưng ads. Khi relaunch: ngân sách boost lớn 2 tuần.',
+    content: '🚨 Chuẩn bị campaign relaunch: storytelling "thay đổi", grand opening.'
+  }
 };
-const getGrp=(t,c,a)=>{if(t&&c&&a)return'B1';if(t&&c&&!a)return'B2';if(t&&!c&&a)return'B3';if(t&&!c&&!a)return'B4';if(!t&&c&&a)return'B5';if(!t&&c&&!a)return'B6';if(!t&&!c&&a)return'B7';return'B8';};
-
-function OverviewModule({csvUrl}){
-  const[rawData,setRawData]=useState([]);
-  const[loading,setLoading]=useState(false);
-  const[msg,setMsg]=useState('');
-  const[fRegion,setFRegion]=useState('all');
-  const[fType,setFType]=useState('all');
-  const[fBranch,setFBranch]=useState('all');
-  const[dateFrom,setDateFrom]=useState('');
-  const[dateTo,setDateTo]=useState('');
-  const[preset,setPreset]=useState('this_month');
-  const[chartMetric,setChartMetric]=useState('dthu');
-  const[dailyPage,setDailyPage]=useState(0);
-
-  const fk=(row,cands)=>{const ks=Object.keys(row);for(const c of cands){const t=c.toLowerCase().replace(/\s+/g,' ').trim();const k=ks.find(k=>k.toLowerCase().replace(/\s+/g,' ').trim()===t);if(k)return k;}for(const c of cands){const t=c.toLowerCase().replace(/\s+/g,' ').trim();const k=ks.find(k=>k.toLowerCase().replace(/\s+/g,' ').trim().includes(t));if(k)return k;}return null;};
-  const norm=row=>{const k=c=>fk(row,c);return{date:pD(row[k(['NGÀY','NGAY','Date'])]),branch:(row[k(['TÊN CHI NHÁNH','CHI NHÁNH'])]||'').toString().trim(),region:(row[k(['Vùng','Vung'])]||'N/A').toString().trim(),storeType:(row[k(['Loại cửa hàng','Loai cua hang'])]||'N/A').toString().trim(),dthuT:pN(row[k(['DTHU MỤC TIÊU','DOANH THU MỤC TIÊU'])]),donT:pN(row[k(['ĐƠN HÀNG MỤC TIÊU'])]),spT:pN(row[k(['SỐ SẢN PHẨM MỤC TIÊU','SẢN PHẨM MỤC TIÊU'])]),trafficT:pN(row[k(['TRAFFIC MỤC TIÊU'])]),atvT:pN(row[k(['ATV MỤC TIÊU'])]),uptT:pN(row[k(['UPT MỤC TIÊU'])]),crvT:pN(row[k(['CRV MỤC TIÊU'])]),dthuA:pN(row[k(['DTHU đạt','DTHU dat'])]),donA:pN(row[k(['ĐƠN HÀNG đạt','DON HANG dat'])]),spA:pN(row[k(['SẢN PHẨM đạt'])]),trafficA:pN(row[k(['TRAFFIC Đạt','TRAFFIC đạt'])]),atvA:pN(row[k(['ATV đạt'])]),uptA:pN(row[k(['UPT đạt'])]),crvA:pN(row[k(['CRV đạt'])]),};};
-
-  const fetchData=useCallback(async()=>{
-    if(!csvUrl)return;
-    setLoading(true);setMsg('');
-    const proxies=[{n:'direct',u:csvUrl},{n:'corsproxy',u:`https://corsproxy.io/?${encodeURIComponent(csvUrl)}`},{n:'allorigins',u:`https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`}];
-    for(const p of proxies){
-      try{
-        const r=await fetch(p.u,{redirect:'follow'});if(!r.ok)continue;
-        const t=await r.text();if(!t||t.length<10)continue;
-        if(t.trim().toLowerCase().startsWith('<!doctype')||t.trim().toLowerCase().startsWith('<html'))continue;
-        const parsed=Papa.parse(t,{header:true,skipEmptyLines:true});
-        const d=parsed.data.map(norm).filter(r=>r.date&&r.branch);
-        if(d.length===0)continue;
-        setRawData(d);setMsg(`✓ Đã tải ${d.length} dòng`);setLoading(false);return;
-      }catch{}
+const getGrp = (t, c, a) => {
+  if (t && c && a) return 'B1';
+  if (t && c && !a) return 'B2';
+  if (t && !c && a) return 'B3';
+  if (t && !c && !a) return 'B4';
+  if (!t && c && a) return 'B5';
+  if (!t && c && !a) return 'B6';
+  if (!t && !c && a) return 'B7';
+  return 'B8';
+};
+function OverviewModule({
+  csvUrl
+}) {
+  const [rawData, setRawData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [fRegion, setFRegion] = useState('all');
+  const [fType, setFType] = useState('all');
+  const [fBranch, setFBranch] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [preset, setPreset] = useState('this_month');
+  const [chartMetric, setChartMetric] = useState('dthu');
+  const [dailyPage, setDailyPage] = useState(0);
+  const fk = (row, cands) => {
+    const ks = Object.keys(row);
+    for (const c of cands) {
+      const t = c.toLowerCase().replace(/\s+/g, ' ').trim();
+      const k = ks.find(k => k.toLowerCase().replace(/\s+/g, ' ').trim() === t);
+      if (k) return k;
     }
-    setMsg('Không tải được dữ liệu');setLoading(false);
-  },[csvUrl]);
-
-  useEffect(()=>{fetchData();},[fetchData]);
-
-  const toID=d=>d?`${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`:'';
-
-  useEffect(()=>{
-    if(!rawData.length||preset==='custom')return;
-    const mx=new Date(Math.max(...rawData.map(r=>r.date.getTime())));
-    const mn=new Date(Math.min(...rawData.map(r=>r.date.getTime())));
-    let f,t;
-    if(preset==='this_month'){f=new Date(mx.getFullYear(),mx.getMonth(),1);t=mx;}
-    else if(preset==='last_7'){t=mx;f=new Date(mx);f.setDate(mx.getDate()-6);}
-    else if(preset==='last_30'){t=mx;f=new Date(mx);f.setDate(mx.getDate()-29);}
-    else if(preset==='last_month'){f=new Date(mx.getFullYear(),mx.getMonth()-1,1);t=new Date(mx.getFullYear(),mx.getMonth(),0);}
-    else{f=mn;t=mx;}
-    setDateFrom(toID(f));setDateTo(toID(t));
-  },[rawData,preset]);
-
-  const{curData,prevData,dateRange,prevRange}=useMemo(()=>{
-    if(!rawData.length||!dateFrom||!dateTo)return{curData:[],prevData:[],dateRange:null,prevRange:null};
-    const cs=new Date(dateFrom+'T00:00:00'),ce=new Date(dateTo+'T23:59:59');
-    const ps=new Date(cs);ps.setMonth(ps.getMonth()-1);
-    const pe=new Date(ce);pe.setMonth(pe.getMonth()-1);
-    return{curData:rawData.filter(r=>r.date>=cs&&r.date<=ce),prevData:rawData.filter(r=>r.date>=ps&&r.date<=pe),dateRange:[cs,ce],prevRange:[ps,pe]};
-  },[rawData,dateFrom,dateTo]);
-
-  const regions=useMemo(()=>[...new Set(rawData.map(r=>r.region))].filter(Boolean).sort(),[rawData]);
-  const storeTypes=useMemo(()=>[...new Set(rawData.map(r=>r.storeType))].filter(Boolean).sort(),[rawData]);
-  const branches=useMemo(()=>{let l=rawData;if(fRegion!=='all')l=l.filter(r=>r.region===fRegion);if(fType!=='all')l=l.filter(r=>r.storeType===fType);return[...new Set(l.map(r=>r.branch))].filter(Boolean).sort();},[rawData,fRegion,fType]);
-
-  const af=d=>d.filter(r=>(fRegion==='all'||r.region===fRegion)&&(fType==='all'||r.storeType===fType)&&(fBranch==='all'||r.branch===fBranch));
-  const filtered=useMemo(()=>af(curData),[curData,fRegion,fType,fBranch]);
-  const filteredP=useMemo(()=>af(prevData),[prevData,fRegion,fType,fBranch]);
-
-  const agg=d=>{const a={dthuT:0,donT:0,spT:0,trafficT:0,dthuA:0,donA:0,spA:0,trafficA:0};d.forEach(r=>{a.dthuT+=r.dthuT;a.donT+=r.donT;a.spT+=r.spT;a.trafficT+=r.trafficT;a.dthuA+=r.dthuA;a.donA+=r.donA;a.spA+=r.spA;a.trafficA+=r.trafficA;});a.atvA=a.donA?a.dthuA/a.donA:0;a.atvT=a.donT?a.dthuT/a.donT:0;a.uptA=a.donA?a.spA/a.donA:0;a.uptT=a.donT?a.spT/a.donT:0;a.crvA=a.trafficA?(a.donA/a.trafficA)*100:0;a.crvT=a.trafficT?(a.donT/a.trafficT)*100:0;return a;};
-  const cur=useMemo(()=>agg(filtered),[filtered]);
-  const prev=useMemo(()=>agg(filteredP),[filteredP]);
-
-  const compareTable=useMemo(()=>{
-    const fmt=(k,v)=>{if(k==='dthu'||k==='atv')return fK(v);if(k==='crv')return fN(v,2)+'%';if(k==='upt')return fN(v,2);return fN(v);};
-    return[
-      {k:'dthu',l:'Doanh thu',a:cur.dthuA,t:cur.dthuT,pa:prev.dthuA},
-      {k:'don',l:'Đơn hàng',a:cur.donA,t:cur.donT,pa:prev.donA},
-      {k:'sp',l:'Sản phẩm',a:cur.spA,t:cur.spT,pa:prev.spA},
-      {k:'traffic',l:'Traffic',a:cur.trafficA,t:cur.trafficT,pa:prev.trafficA},
-      {k:'atv',l:'ATV',a:cur.atvA,t:cur.atvT,pa:prev.atvA},
-      {k:'upt',l:'UPT',a:cur.uptA,t:cur.uptT,pa:prev.uptA},
-      {k:'crv',l:'CRV (%)',a:cur.crvA,t:cur.crvT,pa:prev.crvA},
-    ].map(m=>({...m,aD:fmt(m.k,m.a),tD:fmt(m.k,m.t),pD:fmt(m.k,m.pa),vsMT:pctChg(m.a,m.t),vsCK:pctChg(m.a,m.pa),pct:m.t?(m.a/m.t)*100:null}));
-  },[cur,prev]);
-
-  const dailyAgg=useMemo(()=>{
-    const map=new Map();
-    filtered.forEach(r=>{const k=r.date.toISOString().slice(0,10);if(!map.has(k))map.set(k,{date:r.date,dthuA:0,donA:0,spA:0,trafficA:0,dthuT:0,donT:0,spT:0,trafficT:0});const e=map.get(k);e.dthuA+=r.dthuA;e.donA+=r.donA;e.spA+=r.spA;e.trafficA+=r.trafficA;e.dthuT+=r.dthuT;e.donT+=r.donT;e.spT+=r.spT;e.trafficT+=r.trafficT;});
-    return[...map.values()].sort((a,b)=>b.date-a.date).map(e=>{
-      const atvA=e.donA?e.dthuA/e.donA:0,atvT=e.donT?e.dthuT/e.donT:0,uptA=e.donA?e.spA/e.donA:0,uptT=e.donT?e.spT/e.donT:0,crvA=e.trafficA?(e.donA/e.trafficA)*100:0,crvT=e.trafficT?(e.donT/e.trafficT)*100:0;
-      return{...e,atvA,atvT,uptA,uptT,crvA,crvT,pct_dthu:e.dthuT?(e.dthuA/e.dthuT)*100:null,pct_don:e.donT?(e.donA/e.donT)*100:null,pct_sp:e.spT?(e.spA/e.spT)*100:null,pct_traffic:e.trafficT?(e.trafficA/e.trafficT)*100:null,pct_atv:atvT?(atvA/atvT)*100:null,pct_upt:uptT?(uptA/uptT)*100:null,pct_crv:crvT?(crvA/crvT)*100:null};
+    for (const c of cands) {
+      const t = c.toLowerCase().replace(/\s+/g, ' ').trim();
+      const k = ks.find(k => k.toLowerCase().replace(/\s+/g, ' ').trim().includes(t));
+      if (k) return k;
+    }
+    return null;
+  };
+  const norm = row => {
+    const k = c => fk(row, c);
+    return {
+      date: pD(row[k(['NGÀY', 'NGAY', 'Date'])]),
+      branch: (row[k(['TÊN CHI NHÁNH', 'CHI NHÁNH'])] || '').toString().trim(),
+      region: (row[k(['Vùng', 'Vung'])] || 'N/A').toString().trim(),
+      storeType: (row[k(['Loại cửa hàng', 'Loai cua hang'])] || 'N/A').toString().trim(),
+      dthuT: pN(row[k(['DTHU MỤC TIÊU', 'DOANH THU MỤC TIÊU'])]),
+      donT: pN(row[k(['ĐƠN HÀNG MỤC TIÊU'])]),
+      spT: pN(row[k(['SỐ SẢN PHẨM MỤC TIÊU', 'SẢN PHẨM MỤC TIÊU'])]),
+      trafficT: pN(row[k(['TRAFFIC MỤC TIÊU'])]),
+      atvT: pN(row[k(['ATV MỤC TIÊU'])]),
+      uptT: pN(row[k(['UPT MỤC TIÊU'])]),
+      crvT: pN(row[k(['CRV MỤC TIÊU'])]),
+      dthuA: pN(row[k(['DTHU đạt', 'DTHU dat'])]),
+      donA: pN(row[k(['ĐƠN HÀNG đạt', 'DON HANG dat'])]),
+      spA: pN(row[k(['SẢN PHẨM đạt'])]),
+      trafficA: pN(row[k(['TRAFFIC Đạt', 'TRAFFIC đạt'])]),
+      atvA: pN(row[k(['ATV đạt'])]),
+      uptA: pN(row[k(['UPT đạt'])]),
+      crvA: pN(row[k(['CRV đạt'])])
+    };
+  };
+  const fetchData = useCallback(async () => {
+    if (!csvUrl) return;
+    setLoading(true);
+    setMsg('');
+    const proxies = [{
+      n: 'direct',
+      u: csvUrl
+    }, {
+      n: 'corsproxy',
+      u: `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`
+    }, {
+      n: 'allorigins',
+      u: `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`
+    }];
+    for (const p of proxies) {
+      try {
+        const r = await fetch(p.u, {
+          redirect: 'follow'
+        });
+        if (!r.ok) continue;
+        const t = await r.text();
+        if (!t || t.length < 10) continue;
+        if (t.trim().toLowerCase().startsWith('<!doctype') || t.trim().toLowerCase().startsWith('<html')) continue;
+        const parsed = Papa.parse(t, {
+          header: true,
+          skipEmptyLines: true
+        });
+        const d = parsed.data.map(norm).filter(r => r.date && r.branch);
+        if (d.length === 0) continue;
+        setRawData(d);
+        setMsg(`✓ Đã tải ${d.length} dòng`);
+        setLoading(false);
+        return;
+      } catch {}
+    }
+    setMsg('Không tải được dữ liệu');
+    setLoading(false);
+  }, [csvUrl]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+  const toID = d => d ? `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}` : '';
+  useEffect(() => {
+    if (!rawData.length || preset === 'custom') return;
+    const mx = new Date(Math.max(...rawData.map(r => r.date.getTime())));
+    const mn = new Date(Math.min(...rawData.map(r => r.date.getTime())));
+    let f, t;
+    if (preset === 'this_month') {
+      f = new Date(mx.getFullYear(), mx.getMonth(), 1);
+      t = mx;
+    } else if (preset === 'last_7') {
+      t = mx;
+      f = new Date(mx);
+      f.setDate(mx.getDate() - 6);
+    } else if (preset === 'last_30') {
+      t = mx;
+      f = new Date(mx);
+      f.setDate(mx.getDate() - 29);
+    } else if (preset === 'last_month') {
+      f = new Date(mx.getFullYear(), mx.getMonth() - 1, 1);
+      t = new Date(mx.getFullYear(), mx.getMonth(), 0);
+    } else {
+      f = mn;
+      t = mx;
+    }
+    setDateFrom(toID(f));
+    setDateTo(toID(t));
+  }, [rawData, preset]);
+  const {
+    curData,
+    prevData,
+    dateRange,
+    prevRange
+  } = useMemo(() => {
+    if (!rawData.length || !dateFrom || !dateTo) return {
+      curData: [],
+      prevData: [],
+      dateRange: null,
+      prevRange: null
+    };
+    const cs = new Date(dateFrom + 'T00:00:00'),
+      ce = new Date(dateTo + 'T23:59:59');
+    const ps = new Date(cs);
+    ps.setMonth(ps.getMonth() - 1);
+    const pe = new Date(ce);
+    pe.setMonth(pe.getMonth() - 1);
+    return {
+      curData: rawData.filter(r => r.date >= cs && r.date <= ce),
+      prevData: rawData.filter(r => r.date >= ps && r.date <= pe),
+      dateRange: [cs, ce],
+      prevRange: [ps, pe]
+    };
+  }, [rawData, dateFrom, dateTo]);
+  const regions = useMemo(() => [...new Set(rawData.map(r => r.region))].filter(Boolean).sort(), [rawData]);
+  const storeTypes = useMemo(() => [...new Set(rawData.map(r => r.storeType))].filter(Boolean).sort(), [rawData]);
+  const branches = useMemo(() => {
+    let l = rawData;
+    if (fRegion !== 'all') l = l.filter(r => r.region === fRegion);
+    if (fType !== 'all') l = l.filter(r => r.storeType === fType);
+    return [...new Set(l.map(r => r.branch))].filter(Boolean).sort();
+  }, [rawData, fRegion, fType]);
+  const af = d => d.filter(r => (fRegion === 'all' || r.region === fRegion) && (fType === 'all' || r.storeType === fType) && (fBranch === 'all' || r.branch === fBranch));
+  const filtered = useMemo(() => af(curData), [curData, fRegion, fType, fBranch]);
+  const filteredP = useMemo(() => af(prevData), [prevData, fRegion, fType, fBranch]);
+  const agg = d => {
+    const a = {
+      dthuT: 0,
+      donT: 0,
+      spT: 0,
+      trafficT: 0,
+      dthuA: 0,
+      donA: 0,
+      spA: 0,
+      trafficA: 0
+    };
+    d.forEach(r => {
+      a.dthuT += r.dthuT;
+      a.donT += r.donT;
+      a.spT += r.spT;
+      a.trafficT += r.trafficT;
+      a.dthuA += r.dthuA;
+      a.donA += r.donA;
+      a.spA += r.spA;
+      a.trafficA += r.trafficA;
     });
-  },[filtered]);
-
-  const dailySeries=useMemo(()=>[...dailyAgg].reverse().map(e=>({...e,label:fDate(e.date)})),[dailyAgg]);
-
-  const branchClass=useMemo(()=>{
-    const m=new Map();
-    filtered.forEach(r=>{if(!m.has(r.branch))m.set(r.branch,{branch:r.branch,region:r.region,storeType:r.storeType,dthuA:0,donA:0,spA:0,trafficA:0,dthuT:0,donT:0,spT:0,trafficT:0});const e=m.get(r.branch);e.dthuA+=r.dthuA;e.donA+=r.donA;e.spA+=r.spA;e.trafficA+=r.trafficA;e.dthuT+=r.dthuT;e.donT+=r.donT;e.spT+=r.spT;e.trafficT+=r.trafficT;});
-    return[...m.values()].map(e=>{
-      const tR=e.trafficT?e.trafficA/e.trafficT:0,cA=e.trafficA?(e.donA/e.trafficA)*100:0,cT=e.trafficT?(e.donT/e.trafficT)*100:0,cR=cT?cA/cT:0,aA=e.donA?e.dthuA/e.donA:0,aT=e.donT?e.dthuT/e.donT:0,aR=aT?aA/aT:0;
-      const tD=tR>=1,cD=cR>=1,aD=aR>=1;
-      return{...e,tR,cR,aR,cA,cT,aA,aT,tD,cD,aD,group:getGrp(tD,cD,aD)};
-    }).sort((a,b)=>a.group.localeCompare(b.group)||a.branch.localeCompare(b.branch));
-  },[filtered]);
-
-  const grpSummary=useMemo(()=>{const o={};Object.keys(G_INFO).forEach(g=>o[g]=[]);branchClass.forEach(b=>{if(o[b.group])o[b.group].push(b);});return o;},[branchClass]);
-  const branchRank=useMemo(()=>[...branchClass].sort((a,b)=>b.dthuA-a.dthuA),[branchClass]);
-
-  const CMCFG={dthu:{l:'Doanh thu',col:'#5b8def',isCurrency:true},don:{l:'Đơn hàng',col:'#ed9ebe'},sp:{l:'Sản phẩm',col:'#b89cf0'},traffic:{l:'Traffic',col:'#d4a849'},atv:{l:'ATV',col:'#6dc88a',isCurrency:true},upt:{l:'UPT',col:'#5b8def',isDec:true},crv:{l:'CRV',col:'#e57878',isPct:true}};
-  const cmCfg=CMCFG[chartMetric]||{};
-  const fmtVal=v=>{if(cmCfg.isCurrency)return fK(v);if(cmCfg.isPct)return fN(v,2)+'%';if(cmCfg.isDec)return fN(v,2);return fN(v);};
-  const gId='gOv_'+chartMetric;
-
-  const PS=15;
-  const totalDailyPages=Math.ceil(dailyAgg.length/PS);
-  const dailyPageData=dailyAgg.slice(dailyPage*PS,(dailyPage+1)*PS);
-
-  const PctCell=({v})=>{if(v==null)return<span style={{color:'var(--muted)'}}>—</span>;const col=v>=100?'var(--green)':v>=80?'var(--amber)':'var(--red)';return<span style={{color:col,fontWeight:600}}>{v.toFixed(0)}%</span>;};
-
-  return<div style={{padding:'24px'}}>
-    {/* Header */}
-    <div style={{marginBottom:24}}>
-      <h1 className="df" style={{margin:0,fontSize:24,fontWeight:800,color:'var(--text)'}}>Tổng quan kinh doanh</h1>
-      <p style={{margin:'4px 0 0',fontSize:13,color:'var(--muted)'}}>
-        {dateRange?<>Kỳ: <strong style={{color:'var(--sub)'}}>{fDate(dateRange[0])} → {fDate(dateRange[1])}</strong>{prevRange&&<span> • Cùng kỳ: {fDate(prevRange[0])} → {fDate(prevRange[1])}</span>}</>:'—'}
-        {loading&&<span style={{marginLeft:8,color:'var(--blue)'}}>⟳ Đang tải...</span>}
-        {msg&&!loading&&<span style={{marginLeft:8,fontSize:12,color:msg.startsWith('✓')?'var(--green)':'var(--red)'}}>{msg}</span>}
-      </p>
-    </div>
-
-    {/* Filters */}
-    <div className="surface fu" style={{padding:20,marginBottom:20}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}><IFilter s={14} c="text-slate-400"/><span style={{fontWeight:600,fontSize:13,color:'var(--sub)'}}>Bộ lọc</span></div>
-      <div style={{marginBottom:12}}>
-        <div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>Khoảng ngày</div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
-          {[{v:'last_7',l:'7 ngày'},{v:'last_30',l:'30 ngày'},{v:'this_month',l:'Tháng này'},{v:'last_month',l:'Tháng trước'},{v:'all',l:'Tất cả'},{v:'custom',l:'Tùy chỉnh'}].map(p=>(
-            <button key={p.v} onClick={()=>setPreset(p.v)} style={{padding:'6px 14px',borderRadius:999,fontSize:11,fontWeight:600,border:preset===p.v?'none':'1px solid rgba(15,23,42,.08)',background:preset===p.v?'linear-gradient(135deg,var(--blue),var(--purple))':'rgba(15,23,42,.03)',color:preset===p.v?'#fff':'var(--sub)',cursor:'pointer',transition:'all .15s'}}>{p.l}</button>
-          ))}
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-          <div><div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:6}}>Từ ngày</div><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setPreset('custom');}} className="input-soft" style={{width:'100%'}}/></div>
-          <div><div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:6}}>Đến ngày</div><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setPreset('custom');}} className="input-soft" style={{width:'100%'}}/></div>
-        </div>
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,paddingTop:12,borderTop:'1px solid var(--border)'}}>
-        <FilterSelect label="Vùng" value={fRegion} onChange={v=>{setFRegion(v);setFBranch('all');}} options={[{v:'all',l:'Tất cả vùng'},...regions.map(r=>({v:r,l:r}))]}/>
-        <FilterSelect label="Loại cửa hàng" value={fType} onChange={v=>{setFType(v);setFBranch('all');}} options={[{v:'all',l:'Tất cả loại'},...storeTypes.map(r=>({v:r,l:r}))]}/>
-        <FilterSelect label="Chi nhánh" value={fBranch} onChange={setFBranch} options={[{v:'all',l:'Tất cả chi nhánh'},...branches.map(r=>({v:r,l:r}))]}/>
-      </div>
-    </div>
-
-    {/* KPI */}
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-      <KpiCard label="Doanh thu" value={fK(cur.dthuA)} sub={`MT: ${fK(cur.dthuT)}`} change={pctChg(cur.dthuA,prev.dthuA)} accent="#c7dafc" delay={0}/>
-      <KpiCard label="Traffic" value={fN(cur.trafficA)} sub={`MT: ${fN(cur.trafficT)}`} change={pctChg(cur.trafficA,prev.trafficA)} accent="#d9c8f7" delay={50}/>
-      <KpiCard label="ATV" value={fK(cur.atvA)} sub={`MT: ${fK(cur.atvT)}`} change={pctChg(cur.atvA,prev.atvA)} accent="#f7c8dc" delay={100}/>
-      <KpiCard label="CRV" value={fN(cur.crvA,2)+'%'} sub={`MT: ${fN(cur.crvT,2)}%`} change={pctChg(cur.crvA,prev.crvA)} accent="#b9e6c9" delay={150}/>
-    </div>
-
-    {/* Compare Table */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:20}}>
-      <SectionHead icon={<IChart s={15}/>} title="So sánh tổng các chỉ số" sub="Thực đạt vs Mục tiêu vs Cùng kỳ"/>
-      <div style={{overflowX:'auto'}}>
-        <table style={{width:'100%',fontSize:13,borderCollapse:'collapse'}}>
-          <thead><tr style={{fontSize:10,textTransform:'uppercase',letterSpacing:'.07em',color:'var(--muted)',fontWeight:700}}>
-            <th style={{textAlign:'left',padding:'8px 12px'}}>Chỉ số</th>
-            <th style={{textAlign:'right',padding:'8px 12px'}}>Thực đạt</th>
-            <th style={{textAlign:'right',padding:'8px 12px'}}>Mục tiêu</th>
-            <th style={{textAlign:'right',padding:'8px 12px',color:'var(--green)'}}>% Hoàn thành</th>
-            <th style={{textAlign:'right',padding:'8px 12px'}}>vs MT</th>
-            <th style={{textAlign:'right',padding:'8px 12px'}}>Cùng kỳ</th>
-            <th style={{textAlign:'right',padding:'8px 12px'}}>vs CK</th>
-            <th style={{padding:'8px 12px',width:120}}>Tiến độ</th>
-          </tr></thead>
-          <tbody>{compareTable.map(m=>(
-            <tr key={m.k} style={{borderTop:'1px solid var(--border)'}}>
-              <td style={{padding:'10px 12px',fontWeight:600,color:'var(--text)'}}>{m.l}</td>
-              <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700}} className="ticker">{m.aD}</td>
-              <td style={{padding:'10px 12px',textAlign:'right',color:'var(--muted)'}} className="ticker">{m.tD}</td>
-              <td style={{padding:'10px 12px',textAlign:'right',fontWeight:700,color:m.pct==null?'var(--muted)':m.pct>=100?'var(--green)':m.pct>=80?'var(--amber)':'var(--red)'}} className="ticker">{m.pct==null?'—':m.pct.toFixed(1)+'%'}</td>
-              <td style={{padding:'10px 12px',textAlign:'right'}}><DeltaBadge v={m.vsMT}/></td>
-              <td style={{padding:'10px 12px',textAlign:'right',color:'var(--muted)'}} className="ticker">{m.pD}</td>
-              <td style={{padding:'10px 12px',textAlign:'right'}}><DeltaBadge v={m.vsCK}/></td>
-              <td style={{padding:'10px 12px'}}><div style={{height:6,borderRadius:999,background:'rgba(15,23,42,.06)',overflow:'hidden'}}><div style={{height:'100%',borderRadius:999,width:`${Math.min(m.pct||0,100)}%`,background:(m.pct||0)>=100?'linear-gradient(90deg,#b9e6c9,#6dc88a)':(m.pct||0)>=80?'linear-gradient(90deg,#f8dcae,#e6b855)':'linear-gradient(90deg,#f5b9b9,#e57878)'}}/></div></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* Chart */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:20}}>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:12,marginBottom:16}}>
-        <SectionHead icon={<IChart s={15}/>} title="Xu hướng theo ngày" sub="Đường liền: Thực đạt • Đường đứt: Mục tiêu"/>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-          {Object.entries(CMCFG).map(([k,v])=>(
-            <button key={k} onClick={()=>setChartMetric(k)} style={{padding:'5px 12px',borderRadius:999,fontSize:11,fontWeight:600,border:chartMetric===k?'none':'1px solid rgba(15,23,42,.08)',background:chartMetric===k?'linear-gradient(135deg,var(--blue),var(--purple))':'rgba(15,23,42,.03)',color:chartMetric===k?'#fff':'var(--sub)',cursor:'pointer'}}>{v.l}</button>
-          ))}
-        </div>
-      </div>
-      <div style={{width:'100%',height:300}}>
-        <ResponsiveContainer>
-          <ComposedChart data={dailySeries} margin={{top:8,right:24,left:0,bottom:0}}>
-            <defs><linearGradient id={gId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={cmCfg.col} stopOpacity={0.35}/><stop offset="100%" stopColor={cmCfg.col} stopOpacity={0}/></linearGradient></defs>
-            <CartesianGrid strokeDasharray="3 6" stroke="rgba(15,23,42,.05)" vertical={false}/>
-            <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} dy={6}/>
-            <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={fmtVal} axisLine={false} tickLine={false} width={64}/>
-            <Tooltip contentStyle={{borderRadius:12,border:'1px solid rgba(15,23,42,.06)',fontSize:12,boxShadow:'0 8px 24px rgba(15,23,42,.08)',background:'rgba(255,255,255,.96)'}} formatter={v=>fmtVal(v)}/>
-            <Legend wrapperStyle={{fontSize:12,paddingTop:10}} iconType="circle"/>
-            <Area type="monotone" dataKey={chartMetric+'A'} name={cmCfg.l+' thực đạt'} stroke={cmCfg.col} strokeWidth={2.5} fill={`url(#${gId})`} dot={false} activeDot={{r:5,fill:cmCfg.col,strokeWidth:0}}/>
-            <Line type="monotone" dataKey={chartMetric+'T'} name={cmCfg.l+' mục tiêu'} stroke={cmCfg.col} strokeWidth={2} strokeDasharray="5 5" dot={false} legendType="line"/>
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-
-    {/* Daily Table */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:20}}>
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:12,marginBottom:16}}>
-        <SectionHead icon={<IChart s={15}/>} title="Chi tiết chỉ số theo ngày" sub={`Thực đạt vs Mục tiêu • ${dailyAgg.length} ngày`}/>
-        {totalDailyPages>1&&<div style={{display:'flex',gap:6,fontSize:12}}>
-          <button onClick={()=>setDailyPage(Math.max(0,dailyPage-1))} disabled={dailyPage===0} style={{padding:'4px 12px',borderRadius:8,border:'1px solid var(--border)',background:dailyPage===0?'var(--bg)':'#fff',cursor:dailyPage===0?'not-allowed':'pointer',opacity:dailyPage===0?.4:1}}>‹</button>
-          <span style={{padding:'4px 8px',color:'var(--muted)'}}>{dailyPage+1}/{totalDailyPages}</span>
-          <button onClick={()=>setDailyPage(Math.min(totalDailyPages-1,dailyPage+1))} disabled={dailyPage>=totalDailyPages-1} style={{padding:'4px 12px',borderRadius:8,border:'1px solid var(--border)',background:dailyPage>=totalDailyPages-1?'var(--bg)':'#fff',cursor:dailyPage>=totalDailyPages-1?'not-allowed':'pointer',opacity:dailyPage>=totalDailyPages-1?.4:1}}>›</button>
-        </div>}
-      </div>
-      <div style={{overflowX:'auto'}}>
-        <table style={{width:'100%',fontSize:11,borderCollapse:'collapse',whiteSpace:'nowrap'}}>
-          <thead>
-            <tr style={{fontSize:9,textTransform:'uppercase',letterSpacing:'.06em',color:'var(--muted)',fontWeight:700}}>
-              <th rowSpan="2" style={{textAlign:'left',padding:'6px 10px',position:'sticky',left:0,background:'#fff'}}>Ngày</th>
-              {[{l:'Doanh thu',c:'#5b8def'},{l:'Đơn hàng',c:'#ed9ebe'},{l:'Sản phẩm',c:'#b89cf0'},{l:'Traffic',c:'#d4a849'},{l:'ATV',c:'#6dc88a'},{l:'UPT',c:'#5b8def'},{l:'CRV(%)',c:'#e57878'}].map((h,i)=>(
-                <th key={i} colSpan="3" style={{textAlign:'center',padding:'6px 4px',borderLeft:'1px solid var(--border)',color:h.c}}>{h.l}</th>
-              ))}
-            </tr>
-            <tr style={{fontSize:9,color:'var(--muted)',fontWeight:600,borderBottom:'1px solid rgba(15,23,42,.1)'}}>
-              {Array(7).fill(0).map((_,i)=>[
-                <th key={i+'a'} style={{textAlign:'right',padding:'4px 6px',borderLeft:'1px solid var(--border)'}}>Đạt</th>,
-                <th key={i+'b'} style={{textAlign:'right',padding:'4px 6px'}}>MT</th>,
-                <th key={i+'c'} style={{textAlign:'right',padding:'4px 6px'}}>%MT</th>
-              ])}
-            </tr>
-          </thead>
-          <tbody>{dailyPageData.map(d=>(
-            <tr key={d.date.toISOString()} style={{borderBottom:'1px solid var(--border)'}}>
-              <td style={{padding:'7px 10px',fontWeight:600,color:'var(--sub)',position:'sticky',left:0,background:'#fff'}} className="ticker">{fDateFull(d.date)}</td>
-              {[
-                [fK(d.dthuA),fK(d.dthuT),d.pct_dthu],[fN(d.donA),fN(d.donT),d.pct_don],[fN(d.spA),fN(d.spT),d.pct_sp],
-                [fN(d.trafficA),fN(d.trafficT),d.pct_traffic],[fK(d.atvA),fK(d.atvT),d.pct_atv],[fN(d.uptA,2),fN(d.uptT,2),d.pct_upt],
-                [fN(d.crvA,2),fN(d.crvT,2),d.pct_crv]
-              ].map(([a,t,p],i)=>[
-                <td key={i+'a'} style={{padding:'7px 6px',textAlign:'right',fontWeight:600,borderLeft:'1px solid var(--border)'}} className="ticker">{a}</td>,
-                <td key={i+'b'} style={{padding:'7px 6px',textAlign:'right',color:'var(--muted)'}} className="ticker">{t}</td>,
-                <td key={i+'c'} style={{padding:'7px 6px',textAlign:'right'}} className="ticker"><PctCell v={p}/></td>
-              ])}
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* Top/Bottom */}
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
-      {[{title:'Top 5 doanh thu cao nhất',items:branchRank.slice(0,5),variant:'good'},{title:'Bottom 5 doanh thu thấp nhất',items:branchRank.slice(-5).reverse(),variant:'bad'}].map(({title,items,variant})=>(
-        <div key={title} className="surface-el fu" style={{padding:20}}>
-          <div style={{fontWeight:700,fontSize:14,color:'var(--text)',marginBottom:14}} className="df">{title}</div>
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {items.map((it,i)=>{const mx=Math.max(...items.map(x=>x.dthuA),1);return<div key={it.branch} style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{width:26,height:26,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,background:variant==='good'?'#ecf7f0':'#fdecec',color:variant==='good'?'#3f9b5d':'#c44545',flexShrink:0}}>{i+1}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                  <span style={{fontSize:12,fontWeight:600,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{it.branch}</span>
-                  <span style={{fontSize:12,fontWeight:700,color:'var(--text)',flexShrink:0,marginLeft:8}} className="ticker">{fK(it.dthuA)}</span>
-                </div>
-                <div style={{height:4,borderRadius:999,background:'rgba(15,23,42,.06)',overflow:'hidden'}}><div style={{height:'100%',borderRadius:999,width:`${(it.dthuA/mx)*100}%`,background:variant==='good'?'linear-gradient(90deg,#b9e6c9,#6dc88a)':'linear-gradient(90deg,#f5b9b9,#e57878)'}}/></div>
-                <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>{it.region} • {it.dthuT?`${((it.dthuA/it.dthuT)*100).toFixed(0)}% MT`:'N/A'}</div>
-              </div>
-            </div>;})}
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* B1-B8 */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:24}}>
-      <SectionHead icon={<IStar s={15}/>} title="Phân loại chi nhánh" sub="Traffic × CRV × ATV — Đạt khi Thực đạt ≥ Mục tiêu"/>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:8,marginBottom:20}}>
-        {Object.entries(G_INFO).map(([g,info])=>(
-          <div key={g} style={{borderRadius:14,padding:'12px 8px',textAlign:'center',background:info.bg,border:`1px solid ${info.border}`}}>
-            <div style={{fontSize:9,fontWeight:700,color:info.color,marginBottom:4}}>{g}</div>
-            <div style={{fontSize:20,fontWeight:800,color:info.color}} className="df ticker">{grpSummary[g].length}</div>
-            <div style={{fontSize:9,color:'var(--sub)',marginTop:2,lineHeight:1.3}}>{info.label}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {Object.entries(G_INFO).map(([g,info])=>{
-          const stores=grpSummary[g];if(!stores.length)return null;
-          return<div key={g} style={{borderRadius:16,border:`1px solid ${info.border}`,overflow:'hidden'}}>
-            <div style={{padding:'12px 16px',background:info.bg,display:'flex',alignItems:'flex-start',gap:12}}>
-              <div style={{width:44,height:44,borderRadius:12,background:info.color,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:14,flexShrink:0}} className="df">{g}</div>
-              <div style={{flex:1}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-                  <span style={{fontWeight:700,color:'var(--text)'}}>{info.label}</span>
-                  <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>{info.cond}</span>
-                  <span style={{marginLeft:'auto',fontSize:10,padding:'3px 8px',borderRadius:999,background:'rgba(255,255,255,.7)',color:info.color,fontWeight:700}}>{stores.length} CN</span>
-                </div>
-                <p style={{margin:'6px 0 0',fontSize:12,color:'var(--sub)',lineHeight:1.5}}><strong style={{color:'var(--text)'}}>Vận hành:</strong> {info.action}</p>
-                <div style={{marginTop:8,paddingTop:8,borderTop:'1px solid rgba(255,255,255,.6)',display:'flex',flexDirection:'column',gap:4}}>
-                  {[['TRADE','rgba(91,141,239,.12)','#4076d6',info.trade],['DIGITAL','rgba(184,156,240,.15)','#8a6dd1',info.digital],['CONTENT','rgba(237,158,190,.18)','#c45a82',info.content]].map(([label,bg,col,text])=>(
-                    <div key={label} style={{fontSize:12,color:'var(--sub)',lineHeight:1.5}}>
-                      <span style={{display:'inline-block',padding:'1px 7px',borderRadius:5,fontSize:9,fontWeight:700,marginRight:6,background:bg,color:col}}>{label}</span>{text}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div style={{background:'#fff',overflowX:'auto'}}>
-              <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>
-                <thead><tr style={{fontSize:9,textTransform:'uppercase',color:'var(--muted)',fontWeight:700,borderBottom:'1px solid var(--border)'}}>
-                  <th style={{textAlign:'left',padding:'8px 16px'}}>Chi nhánh</th><th style={{textAlign:'left',padding:'8px 8px'}}>Vùng</th><th style={{textAlign:'left',padding:'8px 8px'}}>Loại</th>
-                  <th style={{textAlign:'right',padding:'8px 8px'}}>Traffic %MT</th><th style={{textAlign:'right',padding:'8px 8px'}}>CRV %MT</th><th style={{textAlign:'right',padding:'8px 8px'}}>ATV %MT</th>
-                  <th style={{textAlign:'right',padding:'8px 16px'}}>DTHU</th>
-                </tr></thead>
-                <tbody>{stores.map(s=>(
-                  <tr key={s.branch} style={{borderBottom:'1px solid rgba(15,23,42,.04)'}}>
-                    <td style={{padding:'8px 16px',fontWeight:600,color:'var(--text)'}}>{s.branch}</td>
-                    <td style={{padding:'8px 8px',color:'var(--muted)',fontSize:11}}>{s.region}</td>
-                    <td style={{padding:'8px 8px',color:'var(--muted)',fontSize:11}}>{s.storeType}</td>
-                    <td style={{padding:'8px 8px',textAlign:'right',color:s.tD?'var(--green)':'var(--red)',fontWeight:600,fontSize:11}} className="ticker">{(s.tR*100).toFixed(0)}%</td>
-                    <td style={{padding:'8px 8px',textAlign:'right',color:s.cD?'var(--green)':'var(--red)',fontWeight:600,fontSize:11}} className="ticker">{(s.cR*100).toFixed(0)}%</td>
-                    <td style={{padding:'8px 8px',textAlign:'right',color:s.aD?'var(--green)':'var(--red)',fontWeight:600,fontSize:11}} className="ticker">{(s.aR*100).toFixed(0)}%</td>
-                    <td style={{padding:'8px 16px',textAlign:'right',fontWeight:700,color:'var(--text)'}} className="ticker">{fK(s.dthuA)}</td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
-          </div>;
-        })}
-      </div>
-    </div>
-  </div>;
+    a.atvA = a.donA ? a.dthuA / a.donA : 0;
+    a.atvT = a.donT ? a.dthuT / a.donT : 0;
+    a.uptA = a.donA ? a.spA / a.donA : 0;
+    a.uptT = a.donT ? a.spT / a.donT : 0;
+    a.crvA = a.trafficA ? a.donA / a.trafficA * 100 : 0;
+    a.crvT = a.trafficT ? a.donT / a.trafficT * 100 : 0;
+    return a;
+  };
+  const cur = useMemo(() => agg(filtered), [filtered]);
+  const prev = useMemo(() => agg(filteredP), [filteredP]);
+  const compareTable = useMemo(() => {
+    const fmt = (k, v) => {
+      if (k === 'dthu' || k === 'atv') return fK(v);
+      if (k === 'crv') return fN(v, 2) + '%';
+      if (k === 'upt') return fN(v, 2);
+      return fN(v);
+    };
+    return [{
+      k: 'dthu',
+      l: 'Doanh thu',
+      a: cur.dthuA,
+      t: cur.dthuT,
+      pa: prev.dthuA
+    }, {
+      k: 'don',
+      l: 'Đơn hàng',
+      a: cur.donA,
+      t: cur.donT,
+      pa: prev.donA
+    }, {
+      k: 'sp',
+      l: 'Sản phẩm',
+      a: cur.spA,
+      t: cur.spT,
+      pa: prev.spA
+    }, {
+      k: 'traffic',
+      l: 'Traffic',
+      a: cur.trafficA,
+      t: cur.trafficT,
+      pa: prev.trafficA
+    }, {
+      k: 'atv',
+      l: 'ATV',
+      a: cur.atvA,
+      t: cur.atvT,
+      pa: prev.atvA
+    }, {
+      k: 'upt',
+      l: 'UPT',
+      a: cur.uptA,
+      t: cur.uptT,
+      pa: prev.uptA
+    }, {
+      k: 'crv',
+      l: 'CRV (%)',
+      a: cur.crvA,
+      t: cur.crvT,
+      pa: prev.crvA
+    }].map(m => ({
+      ...m,
+      aD: fmt(m.k, m.a),
+      tD: fmt(m.k, m.t),
+      pD: fmt(m.k, m.pa),
+      vsMT: pctChg(m.a, m.t),
+      vsCK: pctChg(m.a, m.pa),
+      pct: m.t ? m.a / m.t * 100 : null
+    }));
+  }, [cur, prev]);
+  const dailyAgg = useMemo(() => {
+    const map = new Map();
+    filtered.forEach(r => {
+      const k = r.date.toISOString().slice(0, 10);
+      if (!map.has(k)) map.set(k, {
+        date: r.date,
+        dthuA: 0,
+        donA: 0,
+        spA: 0,
+        trafficA: 0,
+        dthuT: 0,
+        donT: 0,
+        spT: 0,
+        trafficT: 0
+      });
+      const e = map.get(k);
+      e.dthuA += r.dthuA;
+      e.donA += r.donA;
+      e.spA += r.spA;
+      e.trafficA += r.trafficA;
+      e.dthuT += r.dthuT;
+      e.donT += r.donT;
+      e.spT += r.spT;
+      e.trafficT += r.trafficT;
+    });
+    return [...map.values()].sort((a, b) => b.date - a.date).map(e => {
+      const atvA = e.donA ? e.dthuA / e.donA : 0,
+        atvT = e.donT ? e.dthuT / e.donT : 0,
+        uptA = e.donA ? e.spA / e.donA : 0,
+        uptT = e.donT ? e.spT / e.donT : 0,
+        crvA = e.trafficA ? e.donA / e.trafficA * 100 : 0,
+        crvT = e.trafficT ? e.donT / e.trafficT * 100 : 0;
+      return {
+        ...e,
+        atvA,
+        atvT,
+        uptA,
+        uptT,
+        crvA,
+        crvT,
+        pct_dthu: e.dthuT ? e.dthuA / e.dthuT * 100 : null,
+        pct_don: e.donT ? e.donA / e.donT * 100 : null,
+        pct_sp: e.spT ? e.spA / e.spT * 100 : null,
+        pct_traffic: e.trafficT ? e.trafficA / e.trafficT * 100 : null,
+        pct_atv: atvT ? atvA / atvT * 100 : null,
+        pct_upt: uptT ? uptA / uptT * 100 : null,
+        pct_crv: crvT ? crvA / crvT * 100 : null
+      };
+    });
+  }, [filtered]);
+  const dailySeries = useMemo(() => [...dailyAgg].reverse().map(e => ({
+    ...e,
+    label: fDate(e.date)
+  })), [dailyAgg]);
+  const branchClass = useMemo(() => {
+    const m = new Map();
+    filtered.forEach(r => {
+      if (!m.has(r.branch)) m.set(r.branch, {
+        branch: r.branch,
+        region: r.region,
+        storeType: r.storeType,
+        dthuA: 0,
+        donA: 0,
+        spA: 0,
+        trafficA: 0,
+        dthuT: 0,
+        donT: 0,
+        spT: 0,
+        trafficT: 0
+      });
+      const e = m.get(r.branch);
+      e.dthuA += r.dthuA;
+      e.donA += r.donA;
+      e.spA += r.spA;
+      e.trafficA += r.trafficA;
+      e.dthuT += r.dthuT;
+      e.donT += r.donT;
+      e.spT += r.spT;
+      e.trafficT += r.trafficT;
+    });
+    return [...m.values()].map(e => {
+      const tR = e.trafficT ? e.trafficA / e.trafficT : 0,
+        cA = e.trafficA ? e.donA / e.trafficA * 100 : 0,
+        cT = e.trafficT ? e.donT / e.trafficT * 100 : 0,
+        cR = cT ? cA / cT : 0,
+        aA = e.donA ? e.dthuA / e.donA : 0,
+        aT = e.donT ? e.dthuT / e.donT : 0,
+        aR = aT ? aA / aT : 0;
+      const tD = tR >= 1,
+        cD = cR >= 1,
+        aD = aR >= 1;
+      return {
+        ...e,
+        tR,
+        cR,
+        aR,
+        cA,
+        cT,
+        aA,
+        aT,
+        tD,
+        cD,
+        aD,
+        group: getGrp(tD, cD, aD)
+      };
+    }).sort((a, b) => a.group.localeCompare(b.group) || a.branch.localeCompare(b.branch));
+  }, [filtered]);
+  const grpSummary = useMemo(() => {
+    const o = {};
+    Object.keys(G_INFO).forEach(g => o[g] = []);
+    branchClass.forEach(b => {
+      if (o[b.group]) o[b.group].push(b);
+    });
+    return o;
+  }, [branchClass]);
+  const branchRank = useMemo(() => [...branchClass].sort((a, b) => b.dthuA - a.dthuA), [branchClass]);
+  const CMCFG = {
+    dthu: {
+      l: 'Doanh thu',
+      col: '#5b8def',
+      isCurrency: true
+    },
+    don: {
+      l: 'Đơn hàng',
+      col: '#ed9ebe'
+    },
+    sp: {
+      l: 'Sản phẩm',
+      col: '#b89cf0'
+    },
+    traffic: {
+      l: 'Traffic',
+      col: '#d4a849'
+    },
+    atv: {
+      l: 'ATV',
+      col: '#6dc88a',
+      isCurrency: true
+    },
+    upt: {
+      l: 'UPT',
+      col: '#5b8def',
+      isDec: true
+    },
+    crv: {
+      l: 'CRV',
+      col: '#e57878',
+      isPct: true
+    }
+  };
+  const cmCfg = CMCFG[chartMetric] || {};
+  const fmtVal = v => {
+    if (cmCfg.isCurrency) return fK(v);
+    if (cmCfg.isPct) return fN(v, 2) + '%';
+    if (cmCfg.isDec) return fN(v, 2);
+    return fN(v);
+  };
+  const gId = 'gOv_' + chartMetric;
+  const PS = 15;
+  const totalDailyPages = Math.ceil(dailyAgg.length / PS);
+  const dailyPageData = dailyAgg.slice(dailyPage * PS, (dailyPage + 1) * PS);
+  const PctCell = ({
+    v
+  }) => {
+    if (v == null) return /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: 'var(--muted)'
+      }
+    }, "\u2014");
+    const col = v >= 100 ? 'var(--green)' : v >= 80 ? 'var(--amber)' : 'var(--red)';
+    return /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: col,
+        fontWeight: 600
+      }
+    }, v.toFixed(0), "%");
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '24px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "df",
+    style: {
+      margin: 0,
+      fontSize: 24,
+      fontWeight: 800,
+      color: 'var(--text)'
+    }
+  }, "T\u1ED5ng quan kinh doanh"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0',
+      fontSize: 13,
+      color: 'var(--muted)'
+    }
+  }, dateRange ? /*#__PURE__*/React.createElement(React.Fragment, null, "K\u1EF3: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--sub)'
+    }
+  }, fDate(dateRange[0]), " \u2192 ", fDate(dateRange[1])), prevRange && /*#__PURE__*/React.createElement("span", null, " \u2022 C\xF9ng k\u1EF3: ", fDate(prevRange[0]), " \u2192 ", fDate(prevRange[1]))) : '—', loading && /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      color: 'var(--blue)'
+    }
+  }, "\u27F3 \u0110ang t\u1EA3i..."), msg && !loading && /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      fontSize: 12,
+      color: msg.startsWith('✓') ? 'var(--green)' : 'var(--red)'
+    }
+  }, msg))), /*#__PURE__*/React.createElement("div", {
+    className: "surface fu",
+    style: {
+      padding: 20,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement(IFilter, {
+    s: 14,
+    c: "text-slate-400"
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      color: 'var(--sub)'
+    }
+  }, "B\u1ED9 l\u1ECDc")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 8
+    }
+  }, "Kho\u1EA3ng ng\xE0y"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginBottom: 10
+    }
+  }, [{
+    v: 'last_7',
+    l: '7 ngày'
+  }, {
+    v: 'last_30',
+    l: '30 ngày'
+  }, {
+    v: 'this_month',
+    l: 'Tháng này'
+  }, {
+    v: 'last_month',
+    l: 'Tháng trước'
+  }, {
+    v: 'all',
+    l: 'Tất cả'
+  }, {
+    v: 'custom',
+    l: 'Tùy chỉnh'
+  }].map(p => /*#__PURE__*/React.createElement("button", {
+    key: p.v,
+    onClick: () => setPreset(p.v),
+    style: {
+      padding: '6px 14px',
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 600,
+      border: preset === p.v ? 'none' : '1px solid rgba(15,23,42,.08)',
+      background: preset === p.v ? 'linear-gradient(135deg,var(--blue),var(--purple))' : 'rgba(15,23,42,.03)',
+      color: preset === p.v ? '#fff' : 'var(--sub)',
+      cursor: 'pointer',
+      transition: 'all .15s'
+    }
+  }, p.l))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 6
+    }
+  }, "T\u1EEB ng\xE0y"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: dateFrom,
+    onChange: e => {
+      setDateFrom(e.target.value);
+      setPreset('custom');
+    },
+    className: "input-soft",
+    style: {
+      width: '100%'
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 6
+    }
+  }, "\u0110\u1EBFn ng\xE0y"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: dateTo,
+    onChange: e => {
+      setDateTo(e.target.value);
+      setPreset('custom');
+    },
+    className: "input-soft",
+    style: {
+      width: '100%'
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr',
+      gap: 10,
+      paddingTop: 12,
+      borderTop: '1px solid var(--border)'
+    }
+  }, /*#__PURE__*/React.createElement(FilterSelect, {
+    label: "V\xF9ng",
+    value: fRegion,
+    onChange: v => {
+      setFRegion(v);
+      setFBranch('all');
+    },
+    options: [{
+      v: 'all',
+      l: 'Tất cả vùng'
+    }, ...regions.map(r => ({
+      v: r,
+      l: r
+    }))]
+  }), /*#__PURE__*/React.createElement(FilterSelect, {
+    label: "Lo\u1EA1i c\u1EEDa h\xE0ng",
+    value: fType,
+    onChange: v => {
+      setFType(v);
+      setFBranch('all');
+    },
+    options: [{
+      v: 'all',
+      l: 'Tất cả loại'
+    }, ...storeTypes.map(r => ({
+      v: r,
+      l: r
+    }))]
+  }), /*#__PURE__*/React.createElement(FilterSelect, {
+    label: "Chi nh\xE1nh",
+    value: fBranch,
+    onChange: setFBranch,
+    options: [{
+      v: 'all',
+      l: 'Tất cả chi nhánh'
+    }, ...branches.map(r => ({
+      v: r,
+      l: r
+    }))]
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4,1fr)',
+      gap: 12,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement(KpiCard, {
+    label: "Doanh thu",
+    value: fK(cur.dthuA),
+    sub: `MT: ${fK(cur.dthuT)}`,
+    change: pctChg(cur.dthuA, prev.dthuA),
+    accent: "#c7dafc",
+    delay: 0
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "Traffic",
+    value: fN(cur.trafficA),
+    sub: `MT: ${fN(cur.trafficT)}`,
+    change: pctChg(cur.trafficA, prev.trafficA),
+    accent: "#d9c8f7",
+    delay: 50
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "ATV",
+    value: fK(cur.atvA),
+    sub: `MT: ${fK(cur.atvT)}`,
+    change: pctChg(cur.atvA, prev.atvA),
+    accent: "#f7c8dc",
+    delay: 100
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "CRV",
+    value: fN(cur.crvA, 2) + '%',
+    sub: `MT: ${fN(cur.crvT, 2)}%`,
+    change: pctChg(cur.crvA, prev.crvA),
+    accent: "#b9e6c9",
+    delay: 150
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "So s\xE1nh t\u1ED5ng c\xE1c ch\u1EC9 s\u1ED1",
+    sub: "Th\u1EF1c \u0111\u1EA1t vs M\u1EE5c ti\xEAu vs C\xF9ng k\u1EF3"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      fontSize: 13,
+      borderCollapse: 'collapse'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      fontSize: 10,
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      color: 'var(--muted)',
+      fontWeight: 700
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'left',
+      padding: '8px 12px'
+    }
+  }, "Ch\u1EC9 s\u1ED1"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 12px'
+    }
+  }, "Th\u1EF1c \u0111\u1EA1t"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 12px'
+    }
+  }, "M\u1EE5c ti\xEAu"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 12px',
+      color: 'var(--green)'
+    }
+  }, "% Ho\xE0n th\xE0nh"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 12px'
+    }
+  }, "vs MT"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 12px'
+    }
+  }, "C\xF9ng k\u1EF3"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 12px'
+    }
+  }, "vs CK"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      padding: '8px 12px',
+      width: 120
+    }
+  }, "Ti\u1EBFn \u0111\u1ED9"))), /*#__PURE__*/React.createElement("tbody", null, compareTable.map(m => /*#__PURE__*/React.createElement("tr", {
+    key: m.k,
+    style: {
+      borderTop: '1px solid var(--border)'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      fontWeight: 600,
+      color: 'var(--text)'
+    }
+  }, m.l), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      textAlign: 'right',
+      fontWeight: 700
+    },
+    className: "ticker"
+  }, m.aD), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      textAlign: 'right',
+      color: 'var(--muted)'
+    },
+    className: "ticker"
+  }, m.tD), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      textAlign: 'right',
+      fontWeight: 700,
+      color: m.pct == null ? 'var(--muted)' : m.pct >= 100 ? 'var(--green)' : m.pct >= 80 ? 'var(--amber)' : 'var(--red)'
+    },
+    className: "ticker"
+  }, m.pct == null ? '—' : m.pct.toFixed(1) + '%'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      textAlign: 'right'
+    }
+  }, /*#__PURE__*/React.createElement(DeltaBadge, {
+    v: m.vsMT
+  })), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      textAlign: 'right',
+      color: 'var(--muted)'
+    },
+    className: "ticker"
+  }, m.pD), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px',
+      textAlign: 'right'
+    }
+  }, /*#__PURE__*/React.createElement(DeltaBadge, {
+    v: m.vsCK
+  })), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '10px 12px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 6,
+      borderRadius: 999,
+      background: 'rgba(15,23,42,.06)',
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: '100%',
+      borderRadius: 999,
+      width: `${Math.min(m.pct || 0, 100)}%`,
+      background: (m.pct || 0) >= 100 ? 'linear-gradient(90deg,#b9e6c9,#6dc88a)' : (m.pct || 0) >= 80 ? 'linear-gradient(90deg,#f8dcae,#e6b855)' : 'linear-gradient(90deg,#f5b9b9,#e57878)'
+    }
+  }))))))))), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 12,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "Xu h\u01B0\u1EDBng theo ng\xE0y",
+    sub: "\u0110\u01B0\u1EDDng li\u1EC1n: Th\u1EF1c \u0111\u1EA1t \u2022 \u0110\u01B0\u1EDDng \u0111\u1EE9t: M\u1EE5c ti\xEAu"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 6
+    }
+  }, Object.entries(CMCFG).map(([k, v]) => /*#__PURE__*/React.createElement("button", {
+    key: k,
+    onClick: () => setChartMetric(k),
+    style: {
+      padding: '5px 12px',
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 600,
+      border: chartMetric === k ? 'none' : '1px solid rgba(15,23,42,.08)',
+      background: chartMetric === k ? 'linear-gradient(135deg,var(--blue),var(--purple))' : 'rgba(15,23,42,.03)',
+      color: chartMetric === k ? '#fff' : 'var(--sub)',
+      cursor: 'pointer'
+    }
+  }, v.l)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100%',
+      height: 300
+    }
+  }, /*#__PURE__*/React.createElement(ResponsiveContainer, null, /*#__PURE__*/React.createElement(ComposedChart, {
+    data: dailySeries,
+    margin: {
+      top: 8,
+      right: 24,
+      left: 0,
+      bottom: 0
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: gId,
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: cmCfg.col,
+    stopOpacity: 0.35
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: cmCfg.col,
+    stopOpacity: 0
+  }))), /*#__PURE__*/React.createElement(CartesianGrid, {
+    strokeDasharray: "3 6",
+    stroke: "rgba(15,23,42,.05)",
+    vertical: false
+  }), /*#__PURE__*/React.createElement(XAxis, {
+    dataKey: "label",
+    stroke: "#94a3b8",
+    fontSize: 11,
+    axisLine: false,
+    tickLine: false,
+    dy: 6
+  }), /*#__PURE__*/React.createElement(YAxis, {
+    stroke: "#94a3b8",
+    fontSize: 11,
+    tickFormatter: fmtVal,
+    axisLine: false,
+    tickLine: false,
+    width: 64
+  }), /*#__PURE__*/React.createElement(Tooltip, {
+    contentStyle: {
+      borderRadius: 12,
+      border: '1px solid rgba(15,23,42,.06)',
+      fontSize: 12,
+      boxShadow: '0 8px 24px rgba(15,23,42,.08)',
+      background: 'rgba(255,255,255,.96)'
+    },
+    formatter: v => fmtVal(v)
+  }), /*#__PURE__*/React.createElement(Legend, {
+    wrapperStyle: {
+      fontSize: 12,
+      paddingTop: 10
+    },
+    iconType: "circle"
+  }), /*#__PURE__*/React.createElement(Area, {
+    type: "monotone",
+    dataKey: chartMetric + 'A',
+    name: cmCfg.l + ' thực đạt',
+    stroke: cmCfg.col,
+    strokeWidth: 2.5,
+    fill: `url(#${gId})`,
+    dot: false,
+    activeDot: {
+      r: 5,
+      fill: cmCfg.col,
+      strokeWidth: 0
+    }
+  }), /*#__PURE__*/React.createElement(Line, {
+    type: "monotone",
+    dataKey: chartMetric + 'T',
+    name: cmCfg.l + ' mục tiêu',
+    stroke: cmCfg.col,
+    strokeWidth: 2,
+    strokeDasharray: "5 5",
+    dot: false,
+    legendType: "line"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 12,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "Chi ti\u1EBFt ch\u1EC9 s\u1ED1 theo ng\xE0y",
+    sub: `Thực đạt vs Mục tiêu • ${dailyAgg.length} ngày`
+  }), totalDailyPages > 1 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setDailyPage(Math.max(0, dailyPage - 1)),
+    disabled: dailyPage === 0,
+    style: {
+      padding: '4px 12px',
+      borderRadius: 8,
+      border: '1px solid var(--border)',
+      background: dailyPage === 0 ? 'var(--bg)' : '#fff',
+      cursor: dailyPage === 0 ? 'not-allowed' : 'pointer',
+      opacity: dailyPage === 0 ? .4 : 1
+    }
+  }, "\u2039"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      padding: '4px 8px',
+      color: 'var(--muted)'
+    }
+  }, dailyPage + 1, "/", totalDailyPages), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setDailyPage(Math.min(totalDailyPages - 1, dailyPage + 1)),
+    disabled: dailyPage >= totalDailyPages - 1,
+    style: {
+      padding: '4px 12px',
+      borderRadius: 8,
+      border: '1px solid var(--border)',
+      background: dailyPage >= totalDailyPages - 1 ? 'var(--bg)' : '#fff',
+      cursor: dailyPage >= totalDailyPages - 1 ? 'not-allowed' : 'pointer',
+      opacity: dailyPage >= totalDailyPages - 1 ? .4 : 1
+    }
+  }, "\u203A"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      fontSize: 11,
+      borderCollapse: 'collapse',
+      whiteSpace: 'nowrap'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      fontSize: 9,
+      textTransform: 'uppercase',
+      letterSpacing: '.06em',
+      color: 'var(--muted)',
+      fontWeight: 700
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    rowSpan: "2",
+    style: {
+      textAlign: 'left',
+      padding: '6px 10px',
+      position: 'sticky',
+      left: 0,
+      background: '#fff'
+    }
+  }, "Ng\xE0y"), [{
+    l: 'Doanh thu',
+    c: '#5b8def'
+  }, {
+    l: 'Đơn hàng',
+    c: '#ed9ebe'
+  }, {
+    l: 'Sản phẩm',
+    c: '#b89cf0'
+  }, {
+    l: 'Traffic',
+    c: '#d4a849'
+  }, {
+    l: 'ATV',
+    c: '#6dc88a'
+  }, {
+    l: 'UPT',
+    c: '#5b8def'
+  }, {
+    l: 'CRV(%)',
+    c: '#e57878'
+  }].map((h, i) => /*#__PURE__*/React.createElement("th", {
+    key: i,
+    colSpan: "3",
+    style: {
+      textAlign: 'center',
+      padding: '6px 4px',
+      borderLeft: '1px solid var(--border)',
+      color: h.c
+    }
+  }, h.l))), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      fontSize: 9,
+      color: 'var(--muted)',
+      fontWeight: 600,
+      borderBottom: '1px solid rgba(15,23,42,.1)'
+    }
+  }, Array(7).fill(0).map((_, i) => [/*#__PURE__*/React.createElement("th", {
+    key: i + 'a',
+    style: {
+      textAlign: 'right',
+      padding: '4px 6px',
+      borderLeft: '1px solid var(--border)'
+    }
+  }, "\u0110\u1EA1t"), /*#__PURE__*/React.createElement("th", {
+    key: i + 'b',
+    style: {
+      textAlign: 'right',
+      padding: '4px 6px'
+    }
+  }, "MT"), /*#__PURE__*/React.createElement("th", {
+    key: i + 'c',
+    style: {
+      textAlign: 'right',
+      padding: '4px 6px'
+    }
+  }, "%MT")]))), /*#__PURE__*/React.createElement("tbody", null, dailyPageData.map(d => /*#__PURE__*/React.createElement("tr", {
+    key: d.date.toISOString(),
+    style: {
+      borderBottom: '1px solid var(--border)'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '7px 10px',
+      fontWeight: 600,
+      color: 'var(--sub)',
+      position: 'sticky',
+      left: 0,
+      background: '#fff'
+    },
+    className: "ticker"
+  }, fDateFull(d.date)), [[fK(d.dthuA), fK(d.dthuT), d.pct_dthu], [fN(d.donA), fN(d.donT), d.pct_don], [fN(d.spA), fN(d.spT), d.pct_sp], [fN(d.trafficA), fN(d.trafficT), d.pct_traffic], [fK(d.atvA), fK(d.atvT), d.pct_atv], [fN(d.uptA, 2), fN(d.uptT, 2), d.pct_upt], [fN(d.crvA, 2), fN(d.crvT, 2), d.pct_crv]].map(([a, t, p], i) => [/*#__PURE__*/React.createElement("td", {
+    key: i + 'a',
+    style: {
+      padding: '7px 6px',
+      textAlign: 'right',
+      fontWeight: 600,
+      borderLeft: '1px solid var(--border)'
+    },
+    className: "ticker"
+  }, a), /*#__PURE__*/React.createElement("td", {
+    key: i + 'b',
+    style: {
+      padding: '7px 6px',
+      textAlign: 'right',
+      color: 'var(--muted)'
+    },
+    className: "ticker"
+  }, t), /*#__PURE__*/React.createElement("td", {
+    key: i + 'c',
+    style: {
+      padding: '7px 6px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, /*#__PURE__*/React.createElement(PctCell, {
+    v: p
+  }))]))))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 16,
+      marginBottom: 20
+    }
+  }, [{
+    title: 'Top 5 doanh thu cao nhất',
+    items: branchRank.slice(0, 5),
+    variant: 'good'
+  }, {
+    title: 'Bottom 5 doanh thu thấp nhất',
+    items: branchRank.slice(-5).reverse(),
+    variant: 'bad'
+  }].map(({
+    title,
+    items,
+    variant
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: title,
+    className: "surface-el fu",
+    style: {
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: 'var(--text)',
+      marginBottom: 14
+    },
+    className: "df"
+  }, title), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10
+    }
+  }, items.map((it, i) => {
+    const mx = Math.max(...items.map(x => x.dthuA), 1);
+    return /*#__PURE__*/React.createElement("div", {
+      key: it.branch,
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 26,
+        height: 26,
+        borderRadius: 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 11,
+        fontWeight: 700,
+        background: variant === 'good' ? '#ecf7f0' : '#fdecec',
+        color: variant === 'good' ? '#3f9b5d' : '#c44545',
+        flexShrink: 0
+      }
+    }, i + 1), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 600,
+        color: 'var(--text)',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }
+    }, it.branch), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--text)',
+        flexShrink: 0,
+        marginLeft: 8
+      },
+      className: "ticker"
+    }, fK(it.dthuA))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 4,
+        borderRadius: 999,
+        background: 'rgba(15,23,42,.06)',
+        overflow: 'hidden'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: '100%',
+        borderRadius: 999,
+        width: `${it.dthuA / mx * 100}%`,
+        background: variant === 'good' ? 'linear-gradient(90deg,#b9e6c9,#6dc88a)' : 'linear-gradient(90deg,#f5b9b9,#e57878)'
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: 'var(--muted)',
+        marginTop: 2
+      }
+    }, it.region, " \u2022 ", it.dthuT ? `${(it.dthuA / it.dthuT * 100).toFixed(0)}% MT` : 'N/A')));
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IStar, {
+      s: 15
+    }),
+    title: "Ph\xE2n lo\u1EA1i chi nh\xE1nh",
+    sub: "Traffic \xD7 CRV \xD7 ATV \u2014 \u0110\u1EA1t khi Th\u1EF1c \u0111\u1EA1t \u2265 M\u1EE5c ti\xEAu"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(8,1fr)',
+      gap: 8,
+      marginBottom: 20
+    }
+  }, Object.entries(G_INFO).map(([g, info]) => /*#__PURE__*/React.createElement("div", {
+    key: g,
+    style: {
+      borderRadius: 14,
+      padding: '12px 8px',
+      textAlign: 'center',
+      background: info.bg,
+      border: `1px solid ${info.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      fontWeight: 700,
+      color: info.color,
+      marginBottom: 4
+    }
+  }, g), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 800,
+      color: info.color
+    },
+    className: "df ticker"
+  }, grpSummary[g].length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 9,
+      color: 'var(--sub)',
+      marginTop: 2,
+      lineHeight: 1.3
+    }
+  }, info.label)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, Object.entries(G_INFO).map(([g, info]) => {
+    const stores = grpSummary[g];
+    if (!stores.length) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: g,
+      style: {
+        borderRadius: 16,
+        border: `1px solid ${info.border}`,
+        overflow: 'hidden'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: '12px 16px',
+        background: info.bg,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        background: info.color,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#fff',
+        fontWeight: 700,
+        fontSize: 14,
+        flexShrink: 0
+      },
+      className: "df"
+    }, g), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flexWrap: 'wrap'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 700,
+        color: 'var(--text)'
+      }
+    }, info.label), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: 'var(--sub)',
+        fontFamily: 'monospace'
+      }
+    }, info.cond), /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: 'auto',
+        fontSize: 10,
+        padding: '3px 8px',
+        borderRadius: 999,
+        background: 'rgba(255,255,255,.7)',
+        color: info.color,
+        fontWeight: 700
+      }
+    }, stores.length, " CN")), /*#__PURE__*/React.createElement("p", {
+      style: {
+        margin: '6px 0 0',
+        fontSize: 12,
+        color: 'var(--sub)',
+        lineHeight: 1.5
+      }
+    }, /*#__PURE__*/React.createElement("strong", {
+      style: {
+        color: 'var(--text)'
+      }
+    }, "V\u1EADn h\xE0nh:"), " ", info.action), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8,
+        paddingTop: 8,
+        borderTop: '1px solid rgba(255,255,255,.6)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4
+      }
+    }, [['TRADE', 'rgba(91,141,239,.12)', '#4076d6', info.trade], ['DIGITAL', 'rgba(184,156,240,.15)', '#8a6dd1', info.digital], ['CONTENT', 'rgba(237,158,190,.18)', '#c45a82', info.content]].map(([label, bg, col, text]) => /*#__PURE__*/React.createElement("div", {
+      key: label,
+      style: {
+        fontSize: 12,
+        color: 'var(--sub)',
+        lineHeight: 1.5
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: 'inline-block',
+        padding: '1px 7px',
+        borderRadius: 5,
+        fontSize: 9,
+        fontWeight: 700,
+        marginRight: 6,
+        background: bg,
+        color: col
+      }
+    }, label), text))))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: '#fff',
+        overflowX: 'auto'
+      }
+    }, /*#__PURE__*/React.createElement("table", {
+      style: {
+        width: '100%',
+        fontSize: 12,
+        borderCollapse: 'collapse'
+      }
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+      style: {
+        fontSize: 9,
+        textTransform: 'uppercase',
+        color: 'var(--muted)',
+        fontWeight: 700,
+        borderBottom: '1px solid var(--border)'
+      }
+    }, /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'left',
+        padding: '8px 16px'
+      }
+    }, "Chi nh\xE1nh"), /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'left',
+        padding: '8px 8px'
+      }
+    }, "V\xF9ng"), /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'left',
+        padding: '8px 8px'
+      }
+    }, "Lo\u1EA1i"), /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'right',
+        padding: '8px 8px'
+      }
+    }, "Traffic %MT"), /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'right',
+        padding: '8px 8px'
+      }
+    }, "CRV %MT"), /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'right',
+        padding: '8px 8px'
+      }
+    }, "ATV %MT"), /*#__PURE__*/React.createElement("th", {
+      style: {
+        textAlign: 'right',
+        padding: '8px 16px'
+      }
+    }, "DTHU"))), /*#__PURE__*/React.createElement("tbody", null, stores.map(s => /*#__PURE__*/React.createElement("tr", {
+      key: s.branch,
+      style: {
+        borderBottom: '1px solid rgba(15,23,42,.04)'
+      }
+    }, /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 16px',
+        fontWeight: 600,
+        color: 'var(--text)'
+      }
+    }, s.branch), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 8px',
+        color: 'var(--muted)',
+        fontSize: 11
+      }
+    }, s.region), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 8px',
+        color: 'var(--muted)',
+        fontSize: 11
+      }
+    }, s.storeType), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 8px',
+        textAlign: 'right',
+        color: s.tD ? 'var(--green)' : 'var(--red)',
+        fontWeight: 600,
+        fontSize: 11
+      },
+      className: "ticker"
+    }, (s.tR * 100).toFixed(0), "%"), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 8px',
+        textAlign: 'right',
+        color: s.cD ? 'var(--green)' : 'var(--red)',
+        fontWeight: 600,
+        fontSize: 11
+      },
+      className: "ticker"
+    }, (s.cR * 100).toFixed(0), "%"), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 8px',
+        textAlign: 'right',
+        color: s.aD ? 'var(--green)' : 'var(--red)',
+        fontWeight: 600,
+        fontSize: 11
+      },
+      className: "ticker"
+    }, (s.aR * 100).toFixed(0), "%"), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '8px 16px',
+        textAlign: 'right',
+        fontWeight: 700,
+        color: 'var(--text)'
+      },
+      className: "ticker"
+    }, fK(s.dthuA))))))));
+  }))));
 }
 
 // ============================================================
 // MODULE 2: KÊNH SOCIAL
 // ============================================================
-function SocialModule({csvUrl}){
-  const[rawData,setRawData]=useState([]);
-  const[loading,setLoading]=useState(false);
-  const[msg,setMsg]=useState('');
-  const[fPage,setFPage]=useState('all');
-  const[fType,setFType]=useState('all');
-  const[dateFrom,setDateFrom]=useState('');
-  const[dateTo,setDateTo]=useState('');
-  const[preset,setPreset]=useState('this_month');
-  const[chartMetric,setChartMetric]=useState('reach');
+function SocialModule({
+  csvUrl
+}) {
+  const [rawData, setRawData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [fPage, setFPage] = useState('all');
+  const [fType, setFType] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [preset, setPreset] = useState('this_month');
+  const [chartMetric, setChartMetric] = useState('reach');
 
   // Normalize social row
-  const norm=row=>{
-    const ks=Object.keys(row);
-    const fk=(...cands)=>{for(const c of cands){const t=c.toLowerCase().trim();const k=ks.find(k=>k.toLowerCase().trim()===t||k.toLowerCase().trim().includes(t));if(k)return k;}return null;};
-    const postId=row[fk('ID bài viết','post id')]||'';
-    const pageId=row[fk('ID Trang','page id')]||'';
-    const pageName=row[fk('Tên Trang','Tên trang','page name')]||'';
-    const title=row[fk('Tiêu đề','title')]||'';
-    const permalink=row[fk('Liên kết vĩnh viễn','permalink')]||'';
-    const isCross=row[fk('Là nội dung đăng chéo')]||'';
-    const isShare=row[fk('Là bài viết chia sẻ')]||'';
-    const postType=row[fk('Loại bài viết','post type')]||'';
-    const sponsoredStatus=row[fk('Trạng thái nội dung được tài trợ')]||'';
-    const dateStr=row[fk('Thời gian đăng','publish time','Ngày','date')]||row[fk('Ngày')]||'';
-    const dateVal=row[fk('Ngày','date')]||row[fk('Thời gian đăng')]||'';
+  const norm = row => {
+    const ks = Object.keys(row);
+    const fk = (...cands) => {
+      for (const c of cands) {
+        const t = c.toLowerCase().trim();
+        const k = ks.find(k => k.toLowerCase().trim() === t || k.toLowerCase().trim().includes(t));
+        if (k) return k;
+      }
+      return null;
+    };
+    const postId = row[fk('ID bài viết', 'post id')] || '';
+    const pageId = row[fk('ID Trang', 'page id')] || '';
+    const pageName = row[fk('Tên Trang', 'Tên trang', 'page name')] || '';
+    const title = row[fk('Tiêu đề', 'title')] || '';
+    const permalink = row[fk('Liên kết vĩnh viễn', 'permalink')] || '';
+    const isCross = row[fk('Là nội dung đăng chéo')] || '';
+    const isShare = row[fk('Là bài viết chia sẻ')] || '';
+    const postType = row[fk('Loại bài viết', 'post type')] || '';
+    const sponsoredStatus = row[fk('Trạng thái nội dung được tài trợ')] || '';
+    const dateStr = row[fk('Thời gian đăng', 'publish time', 'Ngày', 'date')] || row[fk('Ngày')] || '';
+    const dateVal = row[fk('Ngày', 'date')] || row[fk('Thời gian đăng')] || '';
     // Ưu tiên cột Ngày vì Thời gian đăng có thể chứa datetime dài
-    const date=pD(dateVal)||pD(dateStr);
-    const views=pN(row[fk('Lượt xem','views','impressions')]);
-    const reach=pN(row[fk('Số người tiếp cận','reach')]);
-    const totalEngage=pN(row[fk('Cảm xúc, bình luận và lượt chia sẻ','total engagement','total interactions')]);
-    const reactions=pN(row[fk('Cảm xúc','reactions','likes')]);
-    const comments=pN(row[fk('Bình luận','comments')]);
-    const shares=pN(row[fk('Lượt chia sẻ','shares')]);
-    const totalClicks=pN(row[fk('Tổng lượt click','total clicks')]);
-    const photoClicks=pN(row[fk('Photo Click','photo clicks')]);
-    const otherClicks=pN(row[fk('Lượt click khác','other clicks')]);
-    const linkClicks=pN(row[fk('Lượt click vào liên kết','link clicks')]);
-    return{postId,pageId,pageName:pageName.trim(),title,permalink,isCross,isShare,postType:postType.trim(),sponsoredStatus,date,views,reach,totalEngage,reactions,comments,shares,totalClicks,photoClicks,otherClicks,linkClicks};
+    const date = pD(dateVal) || pD(dateStr);
+    const views = pN(row[fk('Lượt xem', 'views', 'impressions')]);
+    const reach = pN(row[fk('Số người tiếp cận', 'reach')]);
+    const totalEngage = pN(row[fk('Cảm xúc, bình luận và lượt chia sẻ', 'total engagement', 'total interactions')]);
+    const reactions = pN(row[fk('Cảm xúc', 'reactions', 'likes')]);
+    const comments = pN(row[fk('Bình luận', 'comments')]);
+    const shares = pN(row[fk('Lượt chia sẻ', 'shares')]);
+    const totalClicks = pN(row[fk('Tổng lượt click', 'total clicks')]);
+    const photoClicks = pN(row[fk('Photo Click', 'photo clicks')]);
+    const otherClicks = pN(row[fk('Lượt click khác', 'other clicks')]);
+    const linkClicks = pN(row[fk('Lượt click vào liên kết', 'link clicks')]);
+    return {
+      postId,
+      pageId,
+      pageName: pageName.trim(),
+      title,
+      permalink,
+      isCross,
+      isShare,
+      postType: postType.trim(),
+      sponsoredStatus,
+      date,
+      views,
+      reach,
+      totalEngage,
+      reactions,
+      comments,
+      shares,
+      totalClicks,
+      photoClicks,
+      otherClicks,
+      linkClicks
+    };
   };
-
-  const fetchData=useCallback(async()=>{
-    if(!csvUrl)return;
-    setLoading(true);setMsg('');
-    const proxies=[{n:'direct',u:csvUrl},{n:'corsproxy',u:`https://corsproxy.io/?${encodeURIComponent(csvUrl)}`},{n:'allorigins',u:`https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`}];
-    for(const p of proxies){
-      try{
-        const r=await fetch(p.u,{redirect:'follow'});if(!r.ok)continue;
-        const t=await r.text();if(!t||t.length<10)continue;
-        if(t.trim().toLowerCase().startsWith('<!doctype')||t.trim().toLowerCase().startsWith('<html'))continue;
-        const parsed=Papa.parse(t,{header:true,skipEmptyLines:true});
-        const d=parsed.data.map(norm).filter(r=>r.pageName&&r.permalink);
-        if(!d.length)continue;
-        setRawData(d);setMsg(`✓ Đã tải ${d.length} bài viết`);setLoading(false);return;
-      }catch(e){console.warn(e);}
+  const fetchData = useCallback(async () => {
+    if (!csvUrl) return;
+    setLoading(true);
+    setMsg('');
+    const proxies = [{
+      n: 'direct',
+      u: csvUrl
+    }, {
+      n: 'corsproxy',
+      u: `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`
+    }, {
+      n: 'allorigins',
+      u: `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`
+    }];
+    for (const p of proxies) {
+      try {
+        const r = await fetch(p.u, {
+          redirect: 'follow'
+        });
+        if (!r.ok) continue;
+        const t = await r.text();
+        if (!t || t.length < 10) continue;
+        if (t.trim().toLowerCase().startsWith('<!doctype') || t.trim().toLowerCase().startsWith('<html')) continue;
+        const parsed = Papa.parse(t, {
+          header: true,
+          skipEmptyLines: true
+        });
+        const d = parsed.data.map(norm).filter(r => r.pageName && r.permalink);
+        if (!d.length) continue;
+        setRawData(d);
+        setMsg(`✓ Đã tải ${d.length} bài viết`);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.warn(e);
+      }
     }
-    setMsg('Không tải được dữ liệu');setLoading(false);
-  },[csvUrl]);
-
-  useEffect(()=>{fetchData();},[fetchData]);
-
-  const toID=d=>d?`${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`:'';
-
-  useEffect(()=>{
-    if(!rawData.length||preset==='custom')return;
-    const datesWithTime=rawData.filter(r=>r.date).map(r=>r.date.getTime());
-    if(!datesWithTime.length)return;
-    const mx=new Date(Math.max(...datesWithTime));
-    const mn=new Date(Math.min(...datesWithTime));
-    let f,t;
-    if(preset==='this_month'){f=new Date(mx.getFullYear(),mx.getMonth(),1);t=mx;}
-    else if(preset==='last_7'){t=mx;f=new Date(mx);f.setDate(mx.getDate()-6);}
-    else if(preset==='last_30'){t=mx;f=new Date(mx);f.setDate(mx.getDate()-29);}
-    else if(preset==='last_month'){f=new Date(mx.getFullYear(),mx.getMonth()-1,1);t=new Date(mx.getFullYear(),mx.getMonth(),0);}
-    else{f=mn;t=mx;}
-    setDateFrom(toID(f));setDateTo(toID(t));
-  },[rawData,preset]);
-
-  const{curData,prevData,dateRange,prevRange}=useMemo(()=>{
-    if(!rawData.length||!dateFrom||!dateTo)return{curData:[],prevData:[],dateRange:null,prevRange:null};
-    const cs=new Date(dateFrom+'T00:00:00'),ce=new Date(dateTo+'T23:59:59');
-    const ps=new Date(cs);ps.setMonth(ps.getMonth()-1);
-    const pe=new Date(ce);pe.setMonth(pe.getMonth()-1);
-    return{curData:rawData.filter(r=>r.date&&r.date>=cs&&r.date<=ce),prevData:rawData.filter(r=>r.date&&r.date>=ps&&r.date<=pe),dateRange:[cs,ce],prevRange:[ps,pe]};
-  },[rawData,dateFrom,dateTo]);
-
-  const pages=useMemo(()=>[...new Set(rawData.map(r=>r.pageName))].filter(Boolean).sort(),[rawData]);
-  const postTypes=useMemo(()=>[...new Set(rawData.map(r=>r.postType))].filter(Boolean).sort(),[rawData]);
-
-  const af=d=>d.filter(r=>(fPage==='all'||r.pageName===fPage)&&(fType==='all'||r.postType===fType));
-  const filtered=useMemo(()=>af(curData),[curData,fPage,fType]);
-  const filteredP=useMemo(()=>af(prevData),[prevData,fPage,fType]);
-
-  const agg=d=>{
-    const a={posts:0,reach:0,totalEngage:0,reactions:0,comments:0,shares:0,totalClicks:0,linkClicks:0};
-    d.forEach(r=>{a.posts+=1;a.reach+=r.reach;a.totalEngage+=r.totalEngage;a.reactions+=r.reactions;a.comments+=r.comments;a.shares+=r.shares;a.totalClicks+=r.totalClicks;a.linkClicks+=r.linkClicks;});
-    a.engageRate=a.reach?a.totalEngage/a.reach:0;
-    a.commentRate=a.reach?a.comments/a.reach:0;
+    setMsg('Không tải được dữ liệu');
+    setLoading(false);
+  }, [csvUrl]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+  const toID = d => d ? `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}` : '';
+  useEffect(() => {
+    if (!rawData.length || preset === 'custom') return;
+    const datesWithTime = rawData.filter(r => r.date).map(r => r.date.getTime());
+    if (!datesWithTime.length) return;
+    const mx = new Date(Math.max(...datesWithTime));
+    const mn = new Date(Math.min(...datesWithTime));
+    let f, t;
+    if (preset === 'this_month') {
+      f = new Date(mx.getFullYear(), mx.getMonth(), 1);
+      t = mx;
+    } else if (preset === 'last_7') {
+      t = mx;
+      f = new Date(mx);
+      f.setDate(mx.getDate() - 6);
+    } else if (preset === 'last_30') {
+      t = mx;
+      f = new Date(mx);
+      f.setDate(mx.getDate() - 29);
+    } else if (preset === 'last_month') {
+      f = new Date(mx.getFullYear(), mx.getMonth() - 1, 1);
+      t = new Date(mx.getFullYear(), mx.getMonth(), 0);
+    } else {
+      f = mn;
+      t = mx;
+    }
+    setDateFrom(toID(f));
+    setDateTo(toID(t));
+  }, [rawData, preset]);
+  const {
+    curData,
+    prevData,
+    dateRange,
+    prevRange
+  } = useMemo(() => {
+    if (!rawData.length || !dateFrom || !dateTo) return {
+      curData: [],
+      prevData: [],
+      dateRange: null,
+      prevRange: null
+    };
+    const cs = new Date(dateFrom + 'T00:00:00'),
+      ce = new Date(dateTo + 'T23:59:59');
+    const ps = new Date(cs);
+    ps.setMonth(ps.getMonth() - 1);
+    const pe = new Date(ce);
+    pe.setMonth(pe.getMonth() - 1);
+    return {
+      curData: rawData.filter(r => r.date && r.date >= cs && r.date <= ce),
+      prevData: rawData.filter(r => r.date && r.date >= ps && r.date <= pe),
+      dateRange: [cs, ce],
+      prevRange: [ps, pe]
+    };
+  }, [rawData, dateFrom, dateTo]);
+  const pages = useMemo(() => [...new Set(rawData.map(r => r.pageName))].filter(Boolean).sort(), [rawData]);
+  const postTypes = useMemo(() => [...new Set(rawData.map(r => r.postType))].filter(Boolean).sort(), [rawData]);
+  const af = d => d.filter(r => (fPage === 'all' || r.pageName === fPage) && (fType === 'all' || r.postType === fType));
+  const filtered = useMemo(() => af(curData), [curData, fPage, fType]);
+  const filteredP = useMemo(() => af(prevData), [prevData, fPage, fType]);
+  const agg = d => {
+    const a = {
+      posts: 0,
+      reach: 0,
+      totalEngage: 0,
+      reactions: 0,
+      comments: 0,
+      shares: 0,
+      totalClicks: 0,
+      linkClicks: 0
+    };
+    d.forEach(r => {
+      a.posts += 1;
+      a.reach += r.reach;
+      a.totalEngage += r.totalEngage;
+      a.reactions += r.reactions;
+      a.comments += r.comments;
+      a.shares += r.shares;
+      a.totalClicks += r.totalClicks;
+      a.linkClicks += r.linkClicks;
+    });
+    a.engageRate = a.reach ? a.totalEngage / a.reach : 0;
+    a.commentRate = a.reach ? a.comments / a.reach : 0;
     return a;
   };
-  const cur=useMemo(()=>agg(filtered),[filtered]);
-  const prev=useMemo(()=>agg(filteredP),[filteredP]);
+  const cur = useMemo(() => agg(filtered), [filtered]);
+  const prev = useMemo(() => agg(filteredP), [filteredP]);
 
   // Daily series
-  const dailySeries=useMemo(()=>{
-    const map=new Map();
-    filtered.forEach(r=>{if(!r.date)return;const k=r.date.toISOString().slice(0,10);if(!map.has(k))map.set(k,{date:r.date,posts:0,reach:0,totalEngage:0,reactions:0,comments:0,shares:0});const e=map.get(k);e.posts++;e.reach+=r.reach;e.totalEngage+=r.totalEngage;e.reactions+=r.reactions;e.comments+=r.comments;e.shares+=r.shares;});
-    // Prev daily
-    const prevMap=new Map();
-    filteredP.forEach(r=>{if(!r.date)return;const k=r.date.toISOString().slice(0,10);if(!prevMap.has(k))prevMap.set(k,{reach:0,totalEngage:0,comments:0});const e=prevMap.get(k);e.reach+=r.reach;e.totalEngage+=r.totalEngage;e.comments+=r.comments;});
-    return[...map.values()].sort((a,b)=>a.date-b.date).map(e=>{
-      const pd=new Date(e.date);pd.setMonth(pd.getMonth()-1);
-      const pk=pd.toISOString().slice(0,10);
-      const pv=prevMap.get(pk)||{reach:0,totalEngage:0,comments:0};
-      return{...e,label:fDate(e.date),engageRate:e.reach?e.totalEngage/e.reach:0,commentRate:e.reach?e.comments/e.reach:0,prevReach:pv.reach,prevTotalEngage:pv.totalEngage,prevComments:pv.comments,prevEngageRate:pv.reach?pv.totalEngage/pv.reach:0,prevCommentRate:pv.reach?pv.comments/pv.reach:0};
+  const dailySeries = useMemo(() => {
+    const map = new Map();
+    filtered.forEach(r => {
+      if (!r.date) return;
+      const k = r.date.toISOString().slice(0, 10);
+      if (!map.has(k)) map.set(k, {
+        date: r.date,
+        posts: 0,
+        reach: 0,
+        totalEngage: 0,
+        reactions: 0,
+        comments: 0,
+        shares: 0
+      });
+      const e = map.get(k);
+      e.posts++;
+      e.reach += r.reach;
+      e.totalEngage += r.totalEngage;
+      e.reactions += r.reactions;
+      e.comments += r.comments;
+      e.shares += r.shares;
     });
-  },[filtered,filteredP]);
+    // Prev daily
+    const prevMap = new Map();
+    filteredP.forEach(r => {
+      if (!r.date) return;
+      const k = r.date.toISOString().slice(0, 10);
+      if (!prevMap.has(k)) prevMap.set(k, {
+        reach: 0,
+        totalEngage: 0,
+        comments: 0
+      });
+      const e = prevMap.get(k);
+      e.reach += r.reach;
+      e.totalEngage += r.totalEngage;
+      e.comments += r.comments;
+    });
+    return [...map.values()].sort((a, b) => a.date - b.date).map(e => {
+      const pd = new Date(e.date);
+      pd.setMonth(pd.getMonth() - 1);
+      const pk = pd.toISOString().slice(0, 10);
+      const pv = prevMap.get(pk) || {
+        reach: 0,
+        totalEngage: 0,
+        comments: 0
+      };
+      return {
+        ...e,
+        label: fDate(e.date),
+        engageRate: e.reach ? e.totalEngage / e.reach : 0,
+        commentRate: e.reach ? e.comments / e.reach : 0,
+        prevReach: pv.reach,
+        prevTotalEngage: pv.totalEngage,
+        prevComments: pv.comments,
+        prevEngageRate: pv.reach ? pv.totalEngage / pv.reach : 0,
+        prevCommentRate: pv.reach ? pv.comments / pv.reach : 0
+      };
+    });
+  }, [filtered, filteredP]);
 
   // By post type
-  const byType=useMemo(()=>{
-    const m=new Map();
-    filtered.forEach(r=>{if(!m.has(r.postType))m.set(r.postType,{type:r.postType,posts:0,reach:0,totalEngage:0,comments:0});const e=m.get(r.postType);e.posts++;e.reach+=r.reach;e.totalEngage+=r.totalEngage;e.comments+=r.comments;});
-    return[...m.values()].map(e=>({...e,avgReach:e.posts?e.reach/e.posts:0,engageRate:e.reach?e.totalEngage/e.reach:0,commentRate:e.reach?e.comments/e.reach:0})).sort((a,b)=>b.posts-a.posts);
-  },[filtered]);
+  const byType = useMemo(() => {
+    const m = new Map();
+    filtered.forEach(r => {
+      if (!m.has(r.postType)) m.set(r.postType, {
+        type: r.postType,
+        posts: 0,
+        reach: 0,
+        totalEngage: 0,
+        comments: 0
+      });
+      const e = m.get(r.postType);
+      e.posts++;
+      e.reach += r.reach;
+      e.totalEngage += r.totalEngage;
+      e.comments += r.comments;
+    });
+    return [...m.values()].map(e => ({
+      ...e,
+      avgReach: e.posts ? e.reach / e.posts : 0,
+      engageRate: e.reach ? e.totalEngage / e.reach : 0,
+      commentRate: e.reach ? e.comments / e.reach : 0
+    })).sort((a, b) => b.posts - a.posts);
+  }, [filtered]);
 
   // By hour
-  const byHour=useMemo(()=>{
-    const m=new Map();
-    rawData.forEach(r=>{
-      if(!r.date)return;
-      const h=r.date.getHours();
-      const slot=`${String(h).padStart(2,'0')}:00`;
-      if(!m.has(slot))m.set(slot,{slot,posts:0,reach:0,totalEngage:0});
-      const e=m.get(slot);e.posts++;e.reach+=r.reach;e.totalEngage+=r.totalEngage;
+  const byHour = useMemo(() => {
+    const m = new Map();
+    rawData.forEach(r => {
+      if (!r.date) return;
+      const h = r.date.getHours();
+      const slot = `${String(h).padStart(2, '0')}:00`;
+      if (!m.has(slot)) m.set(slot, {
+        slot,
+        posts: 0,
+        reach: 0,
+        totalEngage: 0
+      });
+      const e = m.get(slot);
+      e.posts++;
+      e.reach += r.reach;
+      e.totalEngage += r.totalEngage;
     });
-    return[...m.values()].sort((a,b)=>a.slot.localeCompare(b.slot)).map(e=>({...e,avgReach:e.posts?e.reach/e.posts:0,avgEngage:e.posts?e.totalEngage/e.posts:0}));
-  },[rawData]);
+    return [...m.values()].sort((a, b) => a.slot.localeCompare(b.slot)).map(e => ({
+      ...e,
+      avgReach: e.posts ? e.reach / e.posts : 0,
+      avgEngage: e.posts ? e.totalEngage / e.posts : 0
+    }));
+  }, [rawData]);
 
   // By page summary
-  const byPage=useMemo(()=>{
-    const m=new Map();
-    filtered.forEach(r=>{if(!m.has(r.pageName))m.set(r.pageName,{page:r.pageName,posts:0,reach:0,totalEngage:0,reactions:0,comments:0,shares:0});const e=m.get(r.pageName);e.posts++;e.reach+=r.reach;e.totalEngage+=r.totalEngage;e.reactions+=r.reactions;e.comments+=r.comments;e.shares+=r.shares;});
-    return[...m.values()].map(e=>({...e,engageRate:e.reach?e.totalEngage/e.reach:0,commentRate:e.reach?e.comments/e.reach:0})).sort((a,b)=>b.posts-a.posts);
-  },[filtered]);
+  const byPage = useMemo(() => {
+    const m = new Map();
+    filtered.forEach(r => {
+      if (!m.has(r.pageName)) m.set(r.pageName, {
+        page: r.pageName,
+        posts: 0,
+        reach: 0,
+        totalEngage: 0,
+        reactions: 0,
+        comments: 0,
+        shares: 0
+      });
+      const e = m.get(r.pageName);
+      e.posts++;
+      e.reach += r.reach;
+      e.totalEngage += r.totalEngage;
+      e.reactions += r.reactions;
+      e.comments += r.comments;
+      e.shares += r.shares;
+    });
+    return [...m.values()].map(e => ({
+      ...e,
+      engageRate: e.reach ? e.totalEngage / e.reach : 0,
+      commentRate: e.reach ? e.comments / e.reach : 0
+    })).sort((a, b) => b.posts - a.posts);
+  }, [filtered]);
 
   // Reactions breakdown
-  const reactionBreakdown=useMemo(()=>{
-    let like=0,love=0,wow=0,haha=0,sad=0,angry=0;
-    filtered.forEach(r=>{like+=r.reactions;});// Tạm dùng tổng reactions (FB API export chỉ có tổng)
-    return[{name:'❤️ Like/Love',value:like,color:'#ed9ebe'}];
-  },[filtered]);
+  const reactionBreakdown = useMemo(() => {
+    let like = 0,
+      love = 0,
+      wow = 0,
+      haha = 0,
+      sad = 0,
+      angry = 0;
+    filtered.forEach(r => {
+      like += r.reactions;
+    }); // Tạm dùng tổng reactions (FB API export chỉ có tổng)
+    return [{
+      name: '❤️ Like/Love',
+      value: like,
+      color: '#ed9ebe'
+    }];
+  }, [filtered]);
 
   // Top 20 best posts
-  const top20=useMemo(()=>[...filtered].sort((a,b)=>b.totalEngage-a.totalEngage).slice(0,20),[filtered]);
-
-  const CHART_OPTS=[{k:'reach',l:'Tiếp cận'},{k:'totalEngage',l:'Tổng tương tác'},{k:'comments',l:'Bình luận'},{k:'reactions',l:'Cảm xúc'},{k:'engageRate',l:'Tỷ lệ TT'},{k:'commentRate',l:'Tỷ lệ BL'}];
-  const isPct=chartMetric==='engageRate'||chartMetric==='commentRate';
-  const fmtChart=v=>isPct?fPct(v,2):fK(v);
-  const prevKey='prev'+chartMetric.charAt(0).toUpperCase()+chartMetric.slice(1);
-  const gIdS='gS_'+chartMetric;
-
-  return<div style={{padding:24}}>
-    <div style={{marginBottom:24}}>
-      <h1 className="df" style={{margin:0,fontSize:24,fontWeight:800,color:'var(--text)'}}>Kênh Social</h1>
-      <p style={{margin:'4px 0 0',fontSize:13,color:'var(--muted)'}}>
-        {dateRange?<>Kỳ: <strong style={{color:'var(--sub)'}}>{fDate(dateRange[0])} → {fDate(dateRange[1])}</strong>{prevRange&&<span> • Cùng kỳ: {fDate(prevRange[0])} → {fDate(prevRange[1])}</span>}</>:'—'}
-        {loading&&<span style={{marginLeft:8,color:'var(--blue)'}}>⟳ Đang tải...</span>}
-        {msg&&!loading&&<span style={{marginLeft:8,fontSize:12,color:msg.startsWith('✓')?'var(--green)':'var(--red)'}}>{msg}</span>}
-      </p>
-    </div>
-
-    {/* Filters */}
-    <div className="surface fu" style={{padding:20,marginBottom:20}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}><IFilter s={14}/><span style={{fontWeight:600,fontSize:13,color:'var(--sub)'}}>Bộ lọc</span></div>
-      <div style={{marginBottom:12}}>
-        <div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:8}}>Khoảng ngày</div>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
-          {[{v:'last_7',l:'7 ngày'},{v:'last_30',l:'30 ngày'},{v:'this_month',l:'Tháng này'},{v:'last_month',l:'Tháng trước'},{v:'all',l:'Tất cả'},{v:'custom',l:'Tùy chỉnh'}].map(p=>(
-            <button key={p.v} onClick={()=>setPreset(p.v)} style={{padding:'6px 14px',borderRadius:999,fontSize:11,fontWeight:600,border:preset===p.v?'none':'1px solid rgba(15,23,42,.08)',background:preset===p.v?'linear-gradient(135deg,var(--blue),var(--purple))':'rgba(15,23,42,.03)',color:preset===p.v?'#fff':'var(--sub)',cursor:'pointer'}}>{p.l}</button>
-          ))}
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-          <div><div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:6}}>Từ ngày</div><input type="date" value={dateFrom} onChange={e=>{setDateFrom(e.target.value);setPreset('custom');}} className="input-soft" style={{width:'100%'}}/></div>
-          <div><div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:6}}>Đến ngày</div><input type="date" value={dateTo} onChange={e=>{setDateTo(e.target.value);setPreset('custom');}} className="input-soft" style={{width:'100%'}}/></div>
-        </div>
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,paddingTop:12,borderTop:'1px solid var(--border)'}}>
-        <FilterSelect label="Tên trang" value={fPage} onChange={setFPage} options={[{v:'all',l:'Tất cả trang'},...pages.map(p=>({v:p,l:p}))]}/>
-        <FilterSelect label="Loại bài viết" value={fType} onChange={setFType} options={[{v:'all',l:'Tất cả loại'},...postTypes.map(p=>({v:p,l:p}))]}/>
-      </div>
-    </div>
-
-    {/* KPI Cards */}
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-      <KpiCard label="Số bài đăng" value={fN(cur.posts)} sub={`CK: ${fN(prev.posts)}`} change={pctChg(cur.posts,prev.posts)} accent="#c7dafc" delay={0}/>
-      <KpiCard label="Số người tiếp cận" value={fK(cur.reach)} sub={`CK: ${fK(prev.reach)}`} change={pctChg(cur.reach,prev.reach)} accent="#d9c8f7" delay={50}/>
-      <KpiCard label="Tổng tương tác" value={fK(cur.totalEngage)} sub={`CK: ${fK(prev.totalEngage)}`} change={pctChg(cur.totalEngage,prev.totalEngage)} accent="#f7c8dc" delay={100}/>
-      <KpiCard label="Tỷ lệ tương tác" value={fPct(cur.engageRate)} sub={`CK: ${fPct(prev.engageRate)}`} change={pctChg(cur.engageRate,prev.engageRate)} accent="#b9e6c9" delay={150}/>
-    </div>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
-      <KpiCard label="Cảm xúc" value={fK(cur.reactions)} sub={`CK: ${fK(prev.reactions)}`} change={pctChg(cur.reactions,prev.reactions)} accent="#f7c8dc" delay={0}/>
-      <KpiCard label="Bình luận" value={fK(cur.comments)} sub={`CK: ${fK(prev.comments)}`} change={pctChg(cur.comments,prev.comments)} accent="#c7dafc" delay={50}/>
-      <KpiCard label="Tỷ lệ bình luận" value={fPct(cur.commentRate,3)} sub={`CK: ${fPct(prev.commentRate,3)}`} change={pctChg(cur.commentRate,prev.commentRate)} accent="#d9c8f7" delay={100}/>
-      <KpiCard label="Lượt chia sẻ" value={fK(cur.shares)} sub={`CK: ${fK(prev.shares)}`} change={pctChg(cur.shares,prev.shares)} accent="#b9e6c9" delay={150}/>
-    </div>
-
-    {/* Chart */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:20}}>
-      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:12,marginBottom:16}}>
-        <SectionHead icon={<IChart s={15}/>} title="Xu hướng theo ngày" sub="Đường liền: Kỳ này • Đường đứt: Cùng kỳ tháng trước"/>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-          {CHART_OPTS.map(o=>(
-            <button key={o.k} onClick={()=>setChartMetric(o.k)} style={{padding:'5px 12px',borderRadius:999,fontSize:11,fontWeight:600,border:chartMetric===o.k?'none':'1px solid rgba(15,23,42,.08)',background:chartMetric===o.k?'linear-gradient(135deg,var(--blue),var(--purple))':'rgba(15,23,42,.03)',color:chartMetric===o.k?'#fff':'var(--sub)',cursor:'pointer'}}>{o.l}</button>
-          ))}
-        </div>
-      </div>
-      <div style={{width:'100%',height:300}}>
-        <ResponsiveContainer>
-          <ComposedChart data={dailySeries} margin={{top:8,right:24,left:0,bottom:0}}>
-            <defs><linearGradient id={gIdS} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5b8def" stopOpacity={0.3}/><stop offset="100%" stopColor="#5b8def" stopOpacity={0}/></linearGradient></defs>
-            <CartesianGrid strokeDasharray="3 6" stroke="rgba(15,23,42,.05)" vertical={false}/>
-            <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} axisLine={false} tickLine={false} dy={6}/>
-            <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={fmtChart} axisLine={false} tickLine={false} width={60}/>
-            <Tooltip contentStyle={{borderRadius:12,border:'1px solid rgba(15,23,42,.06)',fontSize:12,boxShadow:'0 8px 24px rgba(15,23,42,.08)',background:'rgba(255,255,255,.96)'}} formatter={v=>fmtChart(v)}/>
-            <Legend wrapperStyle={{fontSize:12,paddingTop:10}} iconType="circle"/>
-            <Area type="monotone" dataKey={chartMetric} name="Kỳ này" stroke="#5b8def" strokeWidth={2.5} fill={`url(#${gIdS})`} dot={false} activeDot={{r:5,fill:'#5b8def',strokeWidth:0}}/>
-            <Line type="monotone" dataKey={prevKey} name="Cùng kỳ" stroke="#b89cf0" strokeWidth={2} strokeDasharray="5 5" dot={false} legendType="line"/>
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-
-    {/* By Post Type */}
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
-      <div className="surface-el fu" style={{padding:22}}>
-        <SectionHead icon={<IChart s={15}/>} title="Phân tích theo Loại bài viết" sub="So sánh hiệu suất từng loại content"/>
-        <div style={{overflowX:'auto'}}>
-          <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>
-            <thead><tr style={{fontSize:9,textTransform:'uppercase',color:'var(--muted)',fontWeight:700,borderBottom:'1px solid var(--border)'}}>
-              <th style={{textAlign:'left',padding:'6px 8px'}}>Loại</th>
-              <th style={{textAlign:'right',padding:'6px 8px'}}>Bài</th>
-              <th style={{textAlign:'right',padding:'6px 8px'}}>Tiếp cận TB</th>
-              <th style={{textAlign:'right',padding:'6px 8px'}}>Tỷ lệ TT</th>
-              <th style={{textAlign:'right',padding:'6px 8px'}}>Tỷ lệ BL</th>
-            </tr></thead>
-            <tbody>{byType.map((r,i)=>(
-              <tr key={r.type} style={{borderBottom:'1px solid rgba(15,23,42,.04)'}}>
-                <td style={{padding:'8px 8px',fontWeight:600,color:'var(--text)'}}>{r.type||'—'}</td>
-                <td style={{padding:'8px 8px',textAlign:'right'}} className="ticker">{fN(r.posts)}</td>
-                <td style={{padding:'8px 8px',textAlign:'right'}} className="ticker">{fK(r.avgReach)}</td>
-                <td style={{padding:'8px 8px',textAlign:'right',color:'var(--blue)',fontWeight:600}} className="ticker">{fPct(r.engageRate)}</td>
-                <td style={{padding:'8px 8px',textAlign:'right',color:'var(--purple)',fontWeight:600}} className="ticker">{fPct(r.commentRate,3)}</td>
-              </tr>
-            ))}</tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* By Hour */}
-      <div className="surface-el fu" style={{padding:22}}>
-        <SectionHead icon={<IChart s={15}/>} title="Phân tích theo khung giờ đăng" sub="Khung giờ nào có tiếp cận cao nhất"/>
-        {byHour.length>0?<div style={{width:'100%',height:200}}>
-          <ResponsiveContainer>
-            <BarChart data={byHour} margin={{top:4,right:8,left:0,bottom:0}}>
-              <CartesianGrid strokeDasharray="3 6" stroke="rgba(15,23,42,.05)" vertical={false}/>
-              <XAxis dataKey="slot" stroke="#94a3b8" fontSize={9} axisLine={false} tickLine={false}/>
-              <YAxis stroke="#94a3b8" fontSize={10} tickFormatter={fK} axisLine={false} tickLine={false} width={48}/>
-              <Tooltip contentStyle={{borderRadius:10,border:'1px solid rgba(15,23,42,.06)',fontSize:12}} formatter={v=>fK(v)}/>
-              <Bar dataKey="avgReach" name="Tiếp cận TB" fill="#c7dafc" radius={[4,4,0,0]}>
-                {byHour.map((_,i)=><Cell key={i} fill={i===byHour.reduce((mx,e,idx,arr)=>e.avgReach>arr[mx].avgReach?idx:mx,0)?'#5b8def':'#c7dafc'}/>)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>:<div style={{textAlign:'center',padding:'40px 0',color:'var(--muted)',fontSize:13}}>Chưa có dữ liệu khung giờ</div>}
-      </div>
-    </div>
-
-    {/* Top 3 Rankings */}
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginBottom:20}}>
-      {[
-        {title:'Top 5 trang nhiều bài đăng',data:[...byPage].sort((a,b)=>b.posts-a.posts).slice(0,5),key:'posts',fmt:fN,label:'bài',color:'var(--blue)'},
-        {title:'Top 5 tỷ lệ bình luận cao',data:[...byPage].sort((a,b)=>b.commentRate-a.commentRate).slice(0,5),key:'commentRate',fmt:v=>fPct(v,3),label:'tỷ lệ BL',color:'var(--purple)'},
-        {title:'Top 5 tỷ lệ tương tác cao',data:[...byPage].sort((a,b)=>b.engageRate-a.engageRate).slice(0,5),key:'engageRate',fmt:v=>fPct(v,2),label:'tỷ lệ TT',color:'var(--pink)'},
-      ].map(({title,data,key,fmt,label,color})=>(
-        <div key={title} className="surface-el fu" style={{padding:20}}>
-          <div style={{fontWeight:700,fontSize:13,color:'var(--text)',marginBottom:14}} className="df">{title}</div>
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {data.map((it,i)=>{const mx=Math.max(...data.map(x=>x[key]),0.001);return<div key={it.page} style={{display:'flex',alignItems:'center',gap:8}}>
-              <div style={{width:24,height:24,borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,background:'rgba(91,141,239,.08)',color:'var(--blue)',flexShrink:0}}>{i+1}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                  <span style={{fontSize:11,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)'}}>{it.page}</span>
-                  <span style={{fontSize:11,fontWeight:700,color,flexShrink:0,marginLeft:6}} className="ticker">{fmt(it[key])}</span>
-                </div>
-                <div style={{height:3,borderRadius:999,background:'rgba(15,23,42,.06)',overflow:'hidden'}}><div style={{height:'100%',borderRadius:999,width:`${(it[key]/mx)*100}%`,background:color,opacity:.6}}/></div>
-              </div>
-            </div>;})}
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* Page Summary Table */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:20}}>
-      <SectionHead icon={<IChart s={15}/>} title="Hiệu suất từng trang" sub="Tổng hợp đầy đủ chỉ số theo trang"/>
-      <div style={{overflowX:'auto'}}>
-        <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>
-          <thead><tr style={{fontSize:9,textTransform:'uppercase',color:'var(--muted)',fontWeight:700,borderBottom:'1px solid rgba(15,23,42,.1)'}}>
-            <th style={{textAlign:'left',padding:'8px 12px'}}>Tên trang</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Số bài</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tiếp cận</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tổng TT</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tỷ lệ TT</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Bình luận</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tỷ lệ BL</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Chia sẻ</th>
-          </tr></thead>
-          <tbody>{byPage.map(r=>(
-            <tr key={r.page} style={{borderBottom:'1px solid rgba(15,23,42,.04)'}}>
-              <td style={{padding:'9px 12px',fontWeight:600,color:'var(--text)'}}>{r.page}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fN(r.posts)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.reach)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.totalEngage)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right',color:'var(--blue)',fontWeight:600}} className="ticker">{fPct(r.engageRate)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.comments)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right',color:'var(--purple)',fontWeight:600}} className="ticker">{fPct(r.commentRate,3)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.shares)}</td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* Top 20 Content */}
-    <div className="surface-el fu" style={{padding:24,marginBottom:24}}>
-      <SectionHead icon={<IStar s={15}/>} title="Top 20 nội dung hiệu suất tốt nhất" sub="Xếp theo Tổng tương tác (Cảm xúc + Bình luận + Chia sẻ)"/>
-      <div style={{overflowX:'auto'}}>
-        <table style={{width:'100%',fontSize:12,borderCollapse:'collapse'}}>
-          <thead><tr style={{fontSize:9,textTransform:'uppercase',color:'var(--muted)',fontWeight:700,borderBottom:'1px solid rgba(15,23,42,.1)'}}>
-            <th style={{textAlign:'center',padding:'8px 8px',width:32}}>#</th>
-            <th style={{textAlign:'left',padding:'8px 12px'}}>Tên trang</th>
-            <th style={{textAlign:'left',padding:'8px 8px',maxWidth:200}}>Tiêu đề</th>
-            <th style={{textAlign:'center',padding:'8px 8px'}}>Loại</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Ngày đăng</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tiếp cận</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tổng TT</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Tỷ lệ TT</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Cảm xúc</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>BL</th>
-            <th style={{textAlign:'right',padding:'8px 8px'}}>Chia sẻ</th>
-            <th style={{textAlign:'center',padding:'8px 8px'}}>Link</th>
-          </tr></thead>
-          <tbody>{top20.map((r,i)=>(
-            <tr key={r.permalink+i} style={{borderBottom:'1px solid rgba(15,23,42,.04)',background:i%2===0?'transparent':'rgba(247,248,251,.4)'}}>
-              <td style={{padding:'9px 8px',textAlign:'center'}}>
-                <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:22,height:22,borderRadius:6,background:i<3?'linear-gradient(135deg,var(--blue),var(--purple))':'rgba(15,23,42,.06)',color:i<3?'#fff':'var(--muted)',fontSize:10,fontWeight:700}}>{i+1}</span>
-              </td>
-              <td style={{padding:'9px 12px',fontWeight:600,color:'var(--text)',whiteSpace:'nowrap'}}>{r.pageName}</td>
-              <td style={{padding:'9px 8px',color:'var(--sub)',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.title||'—'}</td>
-              <td style={{padding:'9px 8px',textAlign:'center'}}><span style={{fontSize:9,padding:'2px 8px',borderRadius:6,background:'rgba(91,141,239,.08)',color:'var(--blue)',fontWeight:700}}>{r.postType||'—'}</span></td>
-              <td style={{padding:'9px 8px',textAlign:'right',color:'var(--muted)'}} className="ticker">{r.date?fDateFull(r.date):'—'}</td>
-              <td style={{padding:'9px 8px',textAlign:'right',fontWeight:600}} className="ticker">{fK(r.reach)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right',fontWeight:700,color:'var(--blue)'}} className="ticker">{fK(r.totalEngage)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right',color:'var(--green)',fontWeight:600}} className="ticker">{fPct(r.reach?r.totalEngage/r.reach:0)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.reactions)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.comments)}</td>
-              <td style={{padding:'9px 8px',textAlign:'right'}} className="ticker">{fK(r.shares)}</td>
-              <td style={{padding:'9px 8px',textAlign:'center'}}>
-                {r.permalink?<a href={r.permalink} target="_blank" rel="noopener noreferrer" style={{color:'var(--blue)',textDecoration:'none',fontSize:11,fontWeight:600,padding:'3px 8px',borderRadius:6,background:'rgba(91,141,239,.08)'}}>↗</a>:'—'}
-              </td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </div>
-  </div>;
+  const top20 = useMemo(() => [...filtered].sort((a, b) => b.totalEngage - a.totalEngage).slice(0, 20), [filtered]);
+  const CHART_OPTS = [{
+    k: 'reach',
+    l: 'Tiếp cận'
+  }, {
+    k: 'totalEngage',
+    l: 'Tổng tương tác'
+  }, {
+    k: 'comments',
+    l: 'Bình luận'
+  }, {
+    k: 'reactions',
+    l: 'Cảm xúc'
+  }, {
+    k: 'engageRate',
+    l: 'Tỷ lệ TT'
+  }, {
+    k: 'commentRate',
+    l: 'Tỷ lệ BL'
+  }];
+  const isPct = chartMetric === 'engageRate' || chartMetric === 'commentRate';
+  const fmtChart = v => isPct ? fPct(v, 2) : fK(v);
+  const prevKey = 'prev' + chartMetric.charAt(0).toUpperCase() + chartMetric.slice(1);
+  const gIdS = 'gS_' + chartMetric;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("h1", {
+    className: "df",
+    style: {
+      margin: 0,
+      fontSize: 24,
+      fontWeight: 800,
+      color: 'var(--text)'
+    }
+  }, "K\xEAnh Social"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: '4px 0 0',
+      fontSize: 13,
+      color: 'var(--muted)'
+    }
+  }, dateRange ? /*#__PURE__*/React.createElement(React.Fragment, null, "K\u1EF3: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: 'var(--sub)'
+    }
+  }, fDate(dateRange[0]), " \u2192 ", fDate(dateRange[1])), prevRange && /*#__PURE__*/React.createElement("span", null, " \u2022 C\xF9ng k\u1EF3: ", fDate(prevRange[0]), " \u2192 ", fDate(prevRange[1]))) : '—', loading && /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      color: 'var(--blue)'
+    }
+  }, "\u27F3 \u0110ang t\u1EA3i..."), msg && !loading && /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      fontSize: 12,
+      color: msg.startsWith('✓') ? 'var(--green)' : 'var(--red)'
+    }
+  }, msg))), /*#__PURE__*/React.createElement("div", {
+    className: "surface fu",
+    style: {
+      padding: 20,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement(IFilter, {
+    s: 14
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      color: 'var(--sub)'
+    }
+  }, "B\u1ED9 l\u1ECDc")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 8
+    }
+  }, "Kho\u1EA3ng ng\xE0y"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 6,
+      marginBottom: 10
+    }
+  }, [{
+    v: 'last_7',
+    l: '7 ngày'
+  }, {
+    v: 'last_30',
+    l: '30 ngày'
+  }, {
+    v: 'this_month',
+    l: 'Tháng này'
+  }, {
+    v: 'last_month',
+    l: 'Tháng trước'
+  }, {
+    v: 'all',
+    l: 'Tất cả'
+  }, {
+    v: 'custom',
+    l: 'Tùy chỉnh'
+  }].map(p => /*#__PURE__*/React.createElement("button", {
+    key: p.v,
+    onClick: () => setPreset(p.v),
+    style: {
+      padding: '6px 14px',
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 600,
+      border: preset === p.v ? 'none' : '1px solid rgba(15,23,42,.08)',
+      background: preset === p.v ? 'linear-gradient(135deg,var(--blue),var(--purple))' : 'rgba(15,23,42,.03)',
+      color: preset === p.v ? '#fff' : 'var(--sub)',
+      cursor: 'pointer'
+    }
+  }, p.l))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 6
+    }
+  }, "T\u1EEB ng\xE0y"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: dateFrom,
+    onChange: e => {
+      setDateFrom(e.target.value);
+      setPreset('custom');
+    },
+    className: "input-soft",
+    style: {
+      width: '100%'
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      fontWeight: 700,
+      color: 'var(--muted)',
+      textTransform: 'uppercase',
+      letterSpacing: '.07em',
+      marginBottom: 6
+    }
+  }, "\u0110\u1EBFn ng\xE0y"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    value: dateTo,
+    onChange: e => {
+      setDateTo(e.target.value);
+      setPreset('custom');
+    },
+    className: "input-soft",
+    style: {
+      width: '100%'
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10,
+      paddingTop: 12,
+      borderTop: '1px solid var(--border)'
+    }
+  }, /*#__PURE__*/React.createElement(FilterSelect, {
+    label: "T\xEAn trang",
+    value: fPage,
+    onChange: setFPage,
+    options: [{
+      v: 'all',
+      l: 'Tất cả trang'
+    }, ...pages.map(p => ({
+      v: p,
+      l: p
+    }))]
+  }), /*#__PURE__*/React.createElement(FilterSelect, {
+    label: "Lo\u1EA1i b\xE0i vi\u1EBFt",
+    value: fType,
+    onChange: setFType,
+    options: [{
+      v: 'all',
+      l: 'Tất cả loại'
+    }, ...postTypes.map(p => ({
+      v: p,
+      l: p
+    }))]
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4,1fr)',
+      gap: 12,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement(KpiCard, {
+    label: "S\u1ED1 b\xE0i \u0111\u0103ng",
+    value: fN(cur.posts),
+    sub: `CK: ${fN(prev.posts)}`,
+    change: pctChg(cur.posts, prev.posts),
+    accent: "#c7dafc",
+    delay: 0
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "S\u1ED1 ng\u01B0\u1EDDi ti\u1EBFp c\u1EADn",
+    value: fK(cur.reach),
+    sub: `CK: ${fK(prev.reach)}`,
+    change: pctChg(cur.reach, prev.reach),
+    accent: "#d9c8f7",
+    delay: 50
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "T\u1ED5ng t\u01B0\u01A1ng t\xE1c",
+    value: fK(cur.totalEngage),
+    sub: `CK: ${fK(prev.totalEngage)}`,
+    change: pctChg(cur.totalEngage, prev.totalEngage),
+    accent: "#f7c8dc",
+    delay: 100
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "T\u1EF7 l\u1EC7 t\u01B0\u01A1ng t\xE1c",
+    value: fPct(cur.engageRate),
+    sub: `CK: ${fPct(prev.engageRate)}`,
+    change: pctChg(cur.engageRate, prev.engageRate),
+    accent: "#b9e6c9",
+    delay: 150
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(4,1fr)',
+      gap: 12,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement(KpiCard, {
+    label: "C\u1EA3m x\xFAc",
+    value: fK(cur.reactions),
+    sub: `CK: ${fK(prev.reactions)}`,
+    change: pctChg(cur.reactions, prev.reactions),
+    accent: "#f7c8dc",
+    delay: 0
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "B\xECnh lu\u1EADn",
+    value: fK(cur.comments),
+    sub: `CK: ${fK(prev.comments)}`,
+    change: pctChg(cur.comments, prev.comments),
+    accent: "#c7dafc",
+    delay: 50
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "T\u1EF7 l\u1EC7 b\xECnh lu\u1EADn",
+    value: fPct(cur.commentRate, 3),
+    sub: `CK: ${fPct(prev.commentRate, 3)}`,
+    change: pctChg(cur.commentRate, prev.commentRate),
+    accent: "#d9c8f7",
+    delay: 100
+  }), /*#__PURE__*/React.createElement(KpiCard, {
+    label: "L\u01B0\u1EE3t chia s\u1EBB",
+    value: fK(cur.shares),
+    sub: `CK: ${fK(prev.shares)}`,
+    change: pctChg(cur.shares, prev.shares),
+    accent: "#b9e6c9",
+    delay: 150
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 12,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "Xu h\u01B0\u1EDBng theo ng\xE0y",
+    sub: "\u0110\u01B0\u1EDDng li\u1EC1n: K\u1EF3 n\xE0y \u2022 \u0110\u01B0\u1EDDng \u0111\u1EE9t: C\xF9ng k\u1EF3 th\xE1ng tr\u01B0\u1EDBc"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 6
+    }
+  }, CHART_OPTS.map(o => /*#__PURE__*/React.createElement("button", {
+    key: o.k,
+    onClick: () => setChartMetric(o.k),
+    style: {
+      padding: '5px 12px',
+      borderRadius: 999,
+      fontSize: 11,
+      fontWeight: 600,
+      border: chartMetric === o.k ? 'none' : '1px solid rgba(15,23,42,.08)',
+      background: chartMetric === o.k ? 'linear-gradient(135deg,var(--blue),var(--purple))' : 'rgba(15,23,42,.03)',
+      color: chartMetric === o.k ? '#fff' : 'var(--sub)',
+      cursor: 'pointer'
+    }
+  }, o.l)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100%',
+      height: 300
+    }
+  }, /*#__PURE__*/React.createElement(ResponsiveContainer, null, /*#__PURE__*/React.createElement(ComposedChart, {
+    data: dailySeries,
+    margin: {
+      top: 8,
+      right: 24,
+      left: 0,
+      bottom: 0
+    }
+  }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("linearGradient", {
+    id: gIdS,
+    x1: "0",
+    y1: "0",
+    x2: "0",
+    y2: "1"
+  }, /*#__PURE__*/React.createElement("stop", {
+    offset: "0%",
+    stopColor: "#5b8def",
+    stopOpacity: 0.3
+  }), /*#__PURE__*/React.createElement("stop", {
+    offset: "100%",
+    stopColor: "#5b8def",
+    stopOpacity: 0
+  }))), /*#__PURE__*/React.createElement(CartesianGrid, {
+    strokeDasharray: "3 6",
+    stroke: "rgba(15,23,42,.05)",
+    vertical: false
+  }), /*#__PURE__*/React.createElement(XAxis, {
+    dataKey: "label",
+    stroke: "#94a3b8",
+    fontSize: 11,
+    axisLine: false,
+    tickLine: false,
+    dy: 6
+  }), /*#__PURE__*/React.createElement(YAxis, {
+    stroke: "#94a3b8",
+    fontSize: 11,
+    tickFormatter: fmtChart,
+    axisLine: false,
+    tickLine: false,
+    width: 60
+  }), /*#__PURE__*/React.createElement(Tooltip, {
+    contentStyle: {
+      borderRadius: 12,
+      border: '1px solid rgba(15,23,42,.06)',
+      fontSize: 12,
+      boxShadow: '0 8px 24px rgba(15,23,42,.08)',
+      background: 'rgba(255,255,255,.96)'
+    },
+    formatter: v => fmtChart(v)
+  }), /*#__PURE__*/React.createElement(Legend, {
+    wrapperStyle: {
+      fontSize: 12,
+      paddingTop: 10
+    },
+    iconType: "circle"
+  }), /*#__PURE__*/React.createElement(Area, {
+    type: "monotone",
+    dataKey: chartMetric,
+    name: "K\u1EF3 n\xE0y",
+    stroke: "#5b8def",
+    strokeWidth: 2.5,
+    fill: `url(#${gIdS})`,
+    dot: false,
+    activeDot: {
+      r: 5,
+      fill: '#5b8def',
+      strokeWidth: 0
+    }
+  }), /*#__PURE__*/React.createElement(Line, {
+    type: "monotone",
+    dataKey: prevKey,
+    name: "C\xF9ng k\u1EF3",
+    stroke: "#b89cf0",
+    strokeWidth: 2,
+    strokeDasharray: "5 5",
+    dot: false,
+    legendType: "line"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 16,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 22
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "Ph\xE2n t\xEDch theo Lo\u1EA1i b\xE0i vi\u1EBFt",
+    sub: "So s\xE1nh hi\u1EC7u su\u1EA5t t\u1EEBng lo\u1EA1i content"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      fontSize: 12,
+      borderCollapse: 'collapse'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      fontSize: 9,
+      textTransform: 'uppercase',
+      color: 'var(--muted)',
+      fontWeight: 700,
+      borderBottom: '1px solid var(--border)'
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'left',
+      padding: '6px 8px'
+    }
+  }, "Lo\u1EA1i"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '6px 8px'
+    }
+  }, "B\xE0i"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '6px 8px'
+    }
+  }, "Ti\u1EBFp c\u1EADn TB"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '6px 8px'
+    }
+  }, "T\u1EF7 l\u1EC7 TT"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '6px 8px'
+    }
+  }, "T\u1EF7 l\u1EC7 BL"))), /*#__PURE__*/React.createElement("tbody", null, byType.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+    key: r.type,
+    style: {
+      borderBottom: '1px solid rgba(15,23,42,.04)'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 8px',
+      fontWeight: 600,
+      color: 'var(--text)'
+    }
+  }, r.type || '—'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fN(r.posts)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.avgReach)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 8px',
+      textAlign: 'right',
+      color: 'var(--blue)',
+      fontWeight: 600
+    },
+    className: "ticker"
+  }, fPct(r.engageRate)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 8px',
+      textAlign: 'right',
+      color: 'var(--purple)',
+      fontWeight: 600
+    },
+    className: "ticker"
+  }, fPct(r.commentRate, 3)))))))), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 22
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "Ph\xE2n t\xEDch theo khung gi\u1EDD \u0111\u0103ng",
+    sub: "Khung gi\u1EDD n\xE0o c\xF3 ti\u1EBFp c\u1EADn cao nh\u1EA5t"
+  }), byHour.length > 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100%',
+      height: 200
+    }
+  }, /*#__PURE__*/React.createElement(ResponsiveContainer, null, /*#__PURE__*/React.createElement(BarChart, {
+    data: byHour,
+    margin: {
+      top: 4,
+      right: 8,
+      left: 0,
+      bottom: 0
+    }
+  }, /*#__PURE__*/React.createElement(CartesianGrid, {
+    strokeDasharray: "3 6",
+    stroke: "rgba(15,23,42,.05)",
+    vertical: false
+  }), /*#__PURE__*/React.createElement(XAxis, {
+    dataKey: "slot",
+    stroke: "#94a3b8",
+    fontSize: 9,
+    axisLine: false,
+    tickLine: false
+  }), /*#__PURE__*/React.createElement(YAxis, {
+    stroke: "#94a3b8",
+    fontSize: 10,
+    tickFormatter: fK,
+    axisLine: false,
+    tickLine: false,
+    width: 48
+  }), /*#__PURE__*/React.createElement(Tooltip, {
+    contentStyle: {
+      borderRadius: 10,
+      border: '1px solid rgba(15,23,42,.06)',
+      fontSize: 12
+    },
+    formatter: v => fK(v)
+  }), /*#__PURE__*/React.createElement(Bar, {
+    dataKey: "avgReach",
+    name: "Ti\u1EBFp c\u1EADn TB",
+    fill: "#c7dafc",
+    radius: [4, 4, 0, 0]
+  }, byHour.map((_, i) => /*#__PURE__*/React.createElement(Cell, {
+    key: i,
+    fill: i === byHour.reduce((mx, e, idx, arr) => e.avgReach > arr[mx].avgReach ? idx : mx, 0) ? '#5b8def' : '#c7dafc'
+  })))))) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      padding: '40px 0',
+      color: 'var(--muted)',
+      fontSize: 13
+    }
+  }, "Ch\u01B0a c\xF3 d\u1EEF li\u1EC7u khung gi\u1EDD"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr',
+      gap: 16,
+      marginBottom: 20
+    }
+  }, [{
+    title: 'Top 5 trang nhiều bài đăng',
+    data: [...byPage].sort((a, b) => b.posts - a.posts).slice(0, 5),
+    key: 'posts',
+    fmt: fN,
+    label: 'bài',
+    color: 'var(--blue)'
+  }, {
+    title: 'Top 5 tỷ lệ bình luận cao',
+    data: [...byPage].sort((a, b) => b.commentRate - a.commentRate).slice(0, 5),
+    key: 'commentRate',
+    fmt: v => fPct(v, 3),
+    label: 'tỷ lệ BL',
+    color: 'var(--purple)'
+  }, {
+    title: 'Top 5 tỷ lệ tương tác cao',
+    data: [...byPage].sort((a, b) => b.engageRate - a.engageRate).slice(0, 5),
+    key: 'engageRate',
+    fmt: v => fPct(v, 2),
+    label: 'tỷ lệ TT',
+    color: 'var(--pink)'
+  }].map(({
+    title,
+    data,
+    key,
+    fmt,
+    label,
+    color
+  }) => /*#__PURE__*/React.createElement("div", {
+    key: title,
+    className: "surface-el fu",
+    style: {
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13,
+      color: 'var(--text)',
+      marginBottom: 14
+    },
+    className: "df"
+  }, title), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 10
+    }
+  }, data.map((it, i) => {
+    const mx = Math.max(...data.map(x => x[key]), 0.001);
+    return /*#__PURE__*/React.createElement("div", {
+      key: it.page,
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 24,
+        height: 24,
+        borderRadius: 7,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 10,
+        fontWeight: 700,
+        background: 'rgba(91,141,239,.08)',
+        color: 'var(--blue)',
+        flexShrink: 0
+      }
+    }, i + 1), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: 3
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 600,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        color: 'var(--text)'
+      }
+    }, it.page), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 700,
+        color,
+        flexShrink: 0,
+        marginLeft: 6
+      },
+      className: "ticker"
+    }, fmt(it[key]))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 3,
+        borderRadius: 999,
+        background: 'rgba(15,23,42,.06)',
+        overflow: 'hidden'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: '100%',
+        borderRadius: 999,
+        width: `${it[key] / mx * 100}%`,
+        background: color,
+        opacity: .6
+      }
+    }))));
+  }))))), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IChart, {
+      s: 15
+    }),
+    title: "Hi\u1EC7u su\u1EA5t t\u1EEBng trang",
+    sub: "T\u1ED5ng h\u1EE3p \u0111\u1EA7y \u0111\u1EE7 ch\u1EC9 s\u1ED1 theo trang"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      fontSize: 12,
+      borderCollapse: 'collapse'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      fontSize: 9,
+      textTransform: 'uppercase',
+      color: 'var(--muted)',
+      fontWeight: 700,
+      borderBottom: '1px solid rgba(15,23,42,.1)'
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'left',
+      padding: '8px 12px'
+    }
+  }, "T\xEAn trang"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "S\u1ED1 b\xE0i"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "Ti\u1EBFp c\u1EADn"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "T\u1ED5ng TT"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "T\u1EF7 l\u1EC7 TT"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "B\xECnh lu\u1EADn"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "T\u1EF7 l\u1EC7 BL"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "Chia s\u1EBB"))), /*#__PURE__*/React.createElement("tbody", null, byPage.map(r => /*#__PURE__*/React.createElement("tr", {
+    key: r.page,
+    style: {
+      borderBottom: '1px solid rgba(15,23,42,.04)'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 12px',
+      fontWeight: 600,
+      color: 'var(--text)'
+    }
+  }, r.page), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fN(r.posts)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.reach)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.totalEngage)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right',
+      color: 'var(--blue)',
+      fontWeight: 600
+    },
+    className: "ticker"
+  }, fPct(r.engageRate)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.comments)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right',
+      color: 'var(--purple)',
+      fontWeight: 600
+    },
+    className: "ticker"
+  }, fPct(r.commentRate, 3)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.shares)))))))), /*#__PURE__*/React.createElement("div", {
+    className: "surface-el fu",
+    style: {
+      padding: 24,
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement(SectionHead, {
+    icon: /*#__PURE__*/React.createElement(IStar, {
+      s: 15
+    }),
+    title: "Top 20 n\u1ED9i dung hi\u1EC7u su\u1EA5t t\u1ED1t nh\u1EA5t",
+    sub: "X\u1EBFp theo T\u1ED5ng t\u01B0\u01A1ng t\xE1c (C\u1EA3m x\xFAc + B\xECnh lu\u1EADn + Chia s\u1EBB)"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      fontSize: 12,
+      borderCollapse: 'collapse'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      fontSize: 9,
+      textTransform: 'uppercase',
+      color: 'var(--muted)',
+      fontWeight: 700,
+      borderBottom: '1px solid rgba(15,23,42,.1)'
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center',
+      padding: '8px 8px',
+      width: 32
+    }
+  }, "#"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'left',
+      padding: '8px 12px'
+    }
+  }, "T\xEAn trang"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'left',
+      padding: '8px 8px',
+      maxWidth: 200
+    }
+  }, "Ti\xEAu \u0111\u1EC1"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center',
+      padding: '8px 8px'
+    }
+  }, "Lo\u1EA1i"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "Ng\xE0y \u0111\u0103ng"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "Ti\u1EBFp c\u1EADn"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "T\u1ED5ng TT"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "T\u1EF7 l\u1EC7 TT"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "C\u1EA3m x\xFAc"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "BL"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'right',
+      padding: '8px 8px'
+    }
+  }, "Chia s\u1EBB"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: 'center',
+      padding: '8px 8px'
+    }
+  }, "Link"))), /*#__PURE__*/React.createElement("tbody", null, top20.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+    key: r.permalink + i,
+    style: {
+      borderBottom: '1px solid rgba(15,23,42,.04)',
+      background: i % 2 === 0 ? 'transparent' : 'rgba(247,248,251,.4)'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 22,
+      height: 22,
+      borderRadius: 6,
+      background: i < 3 ? 'linear-gradient(135deg,var(--blue),var(--purple))' : 'rgba(15,23,42,.06)',
+      color: i < 3 ? '#fff' : 'var(--muted)',
+      fontSize: 10,
+      fontWeight: 700
+    }
+  }, i + 1)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 12px',
+      fontWeight: 600,
+      color: 'var(--text)',
+      whiteSpace: 'nowrap'
+    }
+  }, r.pageName), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      color: 'var(--sub)',
+      maxWidth: 200,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    }
+  }, r.title || '—'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 9,
+      padding: '2px 8px',
+      borderRadius: 6,
+      background: 'rgba(91,141,239,.08)',
+      color: 'var(--blue)',
+      fontWeight: 700
+    }
+  }, r.postType || '—')), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right',
+      color: 'var(--muted)'
+    },
+    className: "ticker"
+  }, r.date ? fDateFull(r.date) : '—'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right',
+      fontWeight: 600
+    },
+    className: "ticker"
+  }, fK(r.reach)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right',
+      fontWeight: 700,
+      color: 'var(--blue)'
+    },
+    className: "ticker"
+  }, fK(r.totalEngage)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right',
+      color: 'var(--green)',
+      fontWeight: 600
+    },
+    className: "ticker"
+  }, fPct(r.reach ? r.totalEngage / r.reach : 0)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.reactions)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.comments)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'right'
+    },
+    className: "ticker"
+  }, fK(r.shares)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '9px 8px',
+      textAlign: 'center'
+    }
+  }, r.permalink ? /*#__PURE__*/React.createElement("a", {
+    href: r.permalink,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    style: {
+      color: 'var(--blue)',
+      textDecoration: 'none',
+      fontSize: 11,
+      fontWeight: 600,
+      padding: '3px 8px',
+      borderRadius: 6,
+      background: 'rgba(91,141,239,.08)'
+    }
+  }, "\u2197") : '—'))))))));
 }
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(App, null));
 </script>
 </body>
 </html>
