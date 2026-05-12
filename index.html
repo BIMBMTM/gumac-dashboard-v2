@@ -8,11 +8,40 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
-<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>
+// Sequential loader - đảm bảo load đúng thứ tự
+var LIBS = [
+  'https://unpkg.com/react@18.2.0/umd/react.production.min.js',
+  'https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js',
+  'https://unpkg.com/papaparse@5.4.1/papaparse.min.js',
+  'https://unpkg.com/recharts@2.12.7/umd/Recharts.js',
+  'https://unpkg.com/@babel/standalone/babel.min.js'
+];
+var idx = 0;
+function loadNext() {
+  if (idx >= LIBS.length) {
+    // Tất cả load xong, compile JSX thủ công
+    setTimeout(function(){
+      var appScript = document.getElementById('app-script');
+      var code = appScript.textContent;
+      var transformed = Babel.transform(code, {presets:['react']}).code;
+      var execScript = document.createElement('script');
+      execScript.textContent = transformed;
+      document.head.appendChild(execScript);
+    }, 50);
+    return;
+  }
+  var s = document.createElement('script');
+  s.src = LIBS[idx++];
+  s.onload = loadNext;
+  s.onerror = function(e){ 
+    document.getElementById('load-text').innerHTML = 'Lỗi tải thư viện: ' + e.target.src + '<br>Kiểm tra kết nối internet.';
+    document.getElementById('load-spinner').style.display='none';
+  };
+  document.head.appendChild(s);
+}
+loadNext();
+</script>
 <style>
 :root{--bg:#f7f8fb;--surface:#fff;--border:rgba(15,23,42,0.06);--text:#0f172a;--sub:#475569;--muted:#94a3b8;--blue:#5b8def;--purple:#b89cf0;--pink:#ed9ebe;--green:#6dc88a;--amber:#d4a849;--red:#e57878;--sidebar-w:240px;}
 *{-webkit-font-smoothing:antialiased;box-sizing:border-box;}
@@ -68,7 +97,7 @@ setTimeout(function(){
 },15000);
 </script>
 
-<script type="text/babel" data-presets="react">
+<script type="text/babel-raw" data-presets="react" id="app-script">
 const {useState,useMemo,useEffect,useRef,useCallback}=React;
 const {ComposedChart,AreaChart,Area,LineChart,Line,BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,Legend,ResponsiveContainer,Cell,PieChart,Pie}=Recharts;
 
